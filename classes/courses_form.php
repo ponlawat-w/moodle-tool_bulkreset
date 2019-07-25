@@ -32,22 +32,32 @@ class tool_bulkreset_courses_form extends moodleform {
             }
         }
 
-        $this->add_action_buttons(false, get_string('continue'));
+        $mform->addElement('header', 'schedulingheader', get_string('scheduling', 'tool_bulkreset'));
+        $mform->setExpanded('schedulingheader', true);
+
+        $mform->addElement('checkbox', 'scheduling', get_string('usescheduling', 'tool_bulkreset'));
+        $mform->addElement('date_time_selector', 'schedule', get_string('schedule', 'tool_bulkreset'));
+        $mform->disabledIf('schedule', 'scheduling', 'notchecked');
+
+        $this->add_action_buttons(true, get_string('continue'));
     }
 
-    public function getselectedcourseids() {
+    public function getforwarddata() {
         $data = $this->get_submitted_data();
-        if (!$data || !$data->courses) {
-            return [];
-        }
-
-        $ids = [];
+        $courseids = [];
         foreach ($data->courses as $courseid => $value) {
             if ($value) {
-                $ids[] = $courseid;
+                $courseids[] = $courseid;
             }
         }
 
-        return $ids;
+        $scheduling = isset($data->scheduling) && $data->scheduling;
+        $schedule = isset($data->schedule) && $data->schedule ? $data->schedule : time();
+
+        return (object)[
+            'courses' => $courseids,
+            'scheduling' => $scheduling,
+            'schedule' => $schedule
+        ];
     }
 }

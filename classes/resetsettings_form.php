@@ -6,22 +6,27 @@ require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 
 class tool_bulkreset_resetsettings_form extends moodleform {
-    public $courseids;
+    /**
+     * @var stdClass $forwarddata
+     */
+    public $forwarddata = null;
     public $coursenames;
 
-    public function __construct($courseids = []) {
-        $this->courseids = $courseids;
-        $this->coursenames = [];
-        foreach ($this->courseids as $courseid) {
-            $course = get_course($courseid);
-            $this->coursenames[$courseid] = $course ? $course->fullname : 'N/A';
+    public function __construct($forwarddata = null) {
+        if ($forwarddata) {
+            $this->forwarddata = $forwarddata;
+            $this->coursenames = [];
+            foreach ($this->forwarddata->courses as $courseid) {
+                $course = get_course($courseid);
+                $this->coursenames[$courseid] = $course ? $course->fullname : 'N/A';
+            }
         }
         parent::__construct();
     }
 
     private function getroles() {
         $roles = [];
-        foreach ($this->courseids as $courseid) {
+        foreach ($this->forwarddata->courses as $courseid) {
             $courseroles = get_assignable_roles(context_course::instance($courseid));
             foreach ($courseroles as $key => $value) {
                 if (isset($roles[$key])) {
@@ -41,17 +46,17 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     }
 
     private function getcoursesinmod($modname) {
-        if (!$this->courseids || !count($this->courseids)) {
+        if (!$this->forwarddata->courses || !count($this->forwarddata->courses)) {
             return [];
         }
 
         global $DB;
         $params = [];
-        for ($i = 0; $i < count($this->courseids); $i++) {
+        for ($i = 0; $i < count($this->forwarddata->courses); $i++) {
             $params[] = '?';
         }
         $paramsql = implode(',', $params);
-        return $DB->get_records_sql("SELECT DISTINCT course FROM {{$modname}} WHERE course IN ({$paramsql})", $this->courseids);
+        return $DB->get_records_sql("SELECT DISTINCT course FROM {{$modname}} WHERE course IN ({$paramsql})", $this->forwarddata->courses);
     }
 
     private function getcoursesinmodhtml($coursesinmodrecord) {
@@ -62,18 +67,22 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         return html_writer::tag('ul', implode('', $list), ['class' => 'small text-small']);
     }
 
-    public function getcourseids() {
+    public function getforwarddata() {
         $data = $this->get_data();
-        if (!$data || !$data->courses) {
-            return [];
-        }
-        return explode(',', $data->courses);
+        $courseids = (!$data || !$data->courses) ? [] : explode(',', $data->courses);
+        $scheduling = isset($data->scheduling) && $data->scheduling;
+        $schedule = isset($data->schedule) && $data->schedule ? $data->schedule : time();
+        return (object)[
+            'courses' => $courseids,
+            'scheduling' => $scheduling,
+            'schedule' => $schedule
+        ];
     }
 
     public function getresetdata() {
         $courses = [];
 
-        foreach ($this->courseids as $courseid) {
+        foreach ($this->forwarddata->courses as $courseid) {
             $course = get_course($courseid);
             $data = $this->get_data();
             $data->id = $course->id;
@@ -89,8 +98,8 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     function definition() {
         global $DB, $CFG;
 
-        if (!count($this->courseids)) {
-            $this->courseids = $this->getcourseids();
+        if (!$this->forwarddata) {
+            $this->forwarddata = $this->getforwarddata();
         }
 
         $mform =& $this->_form;
@@ -173,8 +182,14 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             }
         }
 
-        $mform->addElement('hidden', 'courses', implode(',', $this->courseids));
+        $mform->addElement('hidden', 'courses', implode(',', $this->forwarddata->courses));
         $mform->setType('courses', PARAM_TEXT);
+
+        $mform->addElement('hidden', 'scheduling', $this->forwarddata->scheduling);
+        $mform->setType('scheduling', PARAM_BOOL);
+
+        $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
+        $mform->setType('schedule', PARAM_INT);
 
         $buttonarray = array();
         $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('resetcourses', 'tool_bulkreset'));

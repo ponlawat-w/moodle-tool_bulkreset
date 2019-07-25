@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/bulkreset" VERSION="20190725" COMMENT="XMLDB file for Moodle tool/bulkreset"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="tool_bulkreset_schedules" COMMENT="Bulk reset schedules">
+            <FIELDS>
+                <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
+                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="status" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
+                <FIELD NAME="data" SEQUENCE="false" TYPE="text" NOTNULL="false" />
+                <FIELD NAME="result" SEQUENCE="false" TYPE="text" NOTNULL="false" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status" />
+            </INDEXES>
+        </TABLE>
+    </TABLES>
+</XMLDB>

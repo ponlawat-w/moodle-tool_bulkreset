@@ -9,13 +9,17 @@ admin_externalpage_setup('bulkreset');
 $coursesform = new tool_bulkreset_courses_form();
 $resetsettingsform = new tool_bulkreset_resetsettings_form();
 
+if ($coursesform->is_cancelled()) {
+    redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php"));
+    exit;
+}
 if (!$coursesform->is_submitted() && !$resetsettingsform->is_submitted()) {
     redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php"));
     exit;
 }
 
-$courseids = $coursesform->is_submitted() ? $coursesform->getselectedcourseids() : $resetsettingsform->getcourseids();
-$resetsettingsform = new tool_bulkreset_resetsettings_form($courseids);
+$forwarddata = $coursesform->is_submitted() ? $coursesform->getforwarddata() : $resetsettingsform->getforwarddata();
+$resetsettingsform = new tool_bulkreset_resetsettings_form($forwarddata);
 
 if ($resetsettingsform->is_cancelled()) {
     redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php"));
@@ -23,12 +27,22 @@ if ($resetsettingsform->is_cancelled()) {
 } else if ($data = $resetsettingsform->get_data()) {
     if (isset($data->selectdefault)) {
         $_POST = [];
-        $resetsettingsform = new tool_bulkreset_resetsettings_form($courseids);
+        $resetsettingsform = new tool_bulkreset_resetsettings_form($forwarddata);
         $resetsettingsform->load_defaults();
     } else if (isset($data->deselectall)) {
         $_POST = [];
-        $resetsettingsform = new tool_bulkreset_resetsettings_form($courseids);
+        $resetsettingsform = new tool_bulkreset_resetsettings_form($forwarddata);
     } else {
+        if ($forwarddata->scheduling) {
+            $schedule = new stdClass();
+            $schedule->starttime = $data->schedule;
+            $schedule->status = TOOL_BULKRESET_STATUS_SCHEDULED;
+            $schedule->data = json_encode($data);
+            $DB->insert_record('tool_bulkreset_schedules', $schedule);
+            redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php", ['scheduled' => 1]));
+            exit;
+        }
+
         echo $OUTPUT->header();
         echo html_writer::div(get_string('resetfinish', 'tool_bulkreset'), 'alert alert-success');
         $courses_resetdata = $resetsettingsform->getresetdata();
