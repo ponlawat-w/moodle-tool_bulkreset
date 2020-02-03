@@ -70,11 +70,9 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     public function getforwarddata() {
         $data = $this->get_data();
         $courseids = (!$data || !$data->courses) ? [] : explode(',', $data->courses);
-        $scheduling = isset($data->scheduling) && $data->scheduling;
         $schedule = isset($data->schedule) && $data->schedule ? $data->schedule : time();
         return (object)[
             'courses' => $courseids,
-            'scheduling' => $scheduling,
             'schedule' => $schedule
         ];
     }
@@ -184,9 +182,6 @@ class tool_bulkreset_resetsettings_form extends moodleform {
 
         $mform->addElement('hidden', 'courses', implode(',', $this->forwarddata->courses));
         $mform->setType('courses', PARAM_TEXT);
-
-        $mform->addElement('hidden', 'scheduling', $this->forwarddata->scheduling);
-        $mform->setType('scheduling', PARAM_BOOL);
 
         $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
         $mform->setType('schedule', PARAM_INT);

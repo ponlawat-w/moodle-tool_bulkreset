@@ -33,47 +33,12 @@ if ($resetsettingsform->is_cancelled()) {
         $_POST = [];
         $resetsettingsform = new tool_bulkreset_resetsettings_form($forwarddata);
     } else {
-        if ($forwarddata->scheduling) {
-            $schedule = new stdClass();
-            $schedule->starttime = $data->schedule;
-            $schedule->status = TOOL_BULKRESET_STATUS_SCHEDULED;
-            $schedule->data = json_encode($data);
-            $DB->insert_record('tool_bulkreset_schedules', $schedule);
-            redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php", ['scheduled' => 1]));
-            exit;
-        }
-
-        echo $OUTPUT->header();
-        echo html_writer::div(get_string('resetfinish', 'tool_bulkreset'), 'alert alert-success');
-        $courses_resetdata = $resetsettingsform->getresetdata();
-        foreach ($courses_resetdata as $resetdata) {
-            $course = get_course($resetdata->courseid);
-            $status = reset_course_userdata($resetdata);
-
-            $tablerows = [];
-            foreach ($status as $item) {
-                $tablerows[] = [
-                    $item['component'],
-                    $item['item'],
-                    ($item['error'] === false) ?
-                        get_string('ok')
-                        : '<div class="notifyproblem">'.$item['error'].'</div>'
-                ];
-            }
-            $table = new html_table();
-            $table->head = [get_string('resetcomponent'), get_string('resettask'), get_string('resetstatus')];
-            $table->size = ['20%', '40%', '40%'];
-            $table->align = ['left', 'left', 'left'];
-            $table->data = $tablerows;
-
-            echo html_writer::tag('h2', $course->fullname);
-            echo html_writer::table($table);
-            echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]), get_string('view'), ['class' => 'btn btn-primary', 'target' => '_blank']);
-            echo html_writer::start_tag('hr');
-        }
-        echo html_writer::link(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php"), get_string('finish', 'tool_bulkreset'), ['class' => 'btn btn-default']);
-        echo $OUTPUT->footer();
-        exit;
+        $schedule = new stdClass();
+        $schedule->starttime = $data->schedule;
+        $schedule->status = TOOL_BULKRESET_STATUS_SCHEDULED;
+        $schedule->data = json_encode($data);
+        $DB->insert_record('tool_bulkreset_schedules', $schedule);
+        redirect(new moodle_url("/{$CFG->admin}/tool/bulkreset/index.php", ['scheduled' => 1]));
     }
 }
 
