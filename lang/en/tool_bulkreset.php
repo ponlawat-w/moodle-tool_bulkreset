@@ -32,4 +32,7 @@ $string['status_warning'] = 'Success with warnings';
 $string['status_failed'] = 'Failed';
 $string['status_unknown'] = 'Unknown';
 
+$string['sort_sortorder'] = 'Sort categories by default order';
+$string['sort_name'] = 'Sort in same parent by category name';
+
 $string['deleteconfirm'] = 'Are you sure you want to delete this schedule?';

@@ -9,12 +9,15 @@ const TOOL_BULKRESET_STATUS_SUCCESS = 3;
 const TOOL_BULKRESET_STATUS_WARNING = 4;
 const TOOL_BULKRESET_STATUS_FAILED = 5;
 
-function tool_bulkreset_renderselectallbuttons() {
+const TOOL_BULKRESET_SORT_SORTORDER = 1;
+const TOOL_BULKRESET_SORT_NAME = 2;
+
+function tool_bulkreset_renderselectallbuttons($show = true) {
     $selectall = html_writer::link('javascript:void(0);', get_string('selectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-selectall']);
     $deselectall = html_writer::link('javascript:void(0);', get_string('deselectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-deselectall']);
     return html_writer::div(
-        $selectall . ' / ' . $deselectall
-    );
+        $selectall . ' | ' . $deselectall
+    , '', ['style' => 'display:' . ($show ? 'block':'none') . ';']);
 }
 
 function tool_bulkreset_renderselectallallbuttons() {
@@ -125,4 +128,91 @@ function tool_bulkreset_executeschedule($schedule) {
     $DB->update_record('tool_bulkreset_schedules', $schedule);
 
     return true;
+}
+
+function tool_bulkreset_getcategoriesbyid($categories) {
+    $results = [];
+    foreach ($categories as $category) {
+        $results[$category->id] = $category;
+    }
+    return $results;
+}
+
+function tool_bulkreset_getcategorypathnames($category, $categories) {
+    $paths = explode('/', $category->path);
+    $pathnames = [];
+    foreach ($paths as $path) {
+        if (!$path || !$categories[$path]) {
+            continue;
+        }
+        $pathnames[] = $categories[$path]->name;
+    }
+    return $pathnames;
+}
+
+function tool_bulkreset_getcategorytrees($categories) {
+    $trees = [];
+    foreach ($categories as $category) {
+        $paths = explode('/', $category->path);
+        if (!$paths[0]) {
+            $paths = array_slice($paths, 1);
+        }
+        if (!isset($trees[$paths[0]])) {
+            $trees[$paths[0]] = [$paths[0]];
+        }
+        $pointer = &$trees[$paths[0]];
+        for ($i = 1; $i < count($paths); $i++) {
+            $path = $paths[$i];
+            if (!isset($pointer[$path])) {
+                $pointer[$path] = [$path];
+            }
+            $pointer = &$pointer[$path];
+        }
+    }
+    return $trees;
+}
+
+function tool_bulkreset_hierarchysort(&$trees, $categories, $field = 'sortorder') {
+    if (count($trees) == 1) {
+        return $trees;
+    }
+    $sortvalues = [];
+    foreach ($trees as $idx => $item) {
+        if (is_array($item)) {
+            tool_bulkreset_hierarchysort($item, $categories, $field);
+            $sortvalues[] = $categories[$idx]->$field;
+        } else {
+            $sortvalues[] = $categories[$item]->$field;
+        }
+    }
+    array_multisort($sortvalues, $trees);
+}
+
+function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
+    foreach ($trees as $child) {
+        if (is_array($child)) {
+            tool_bulkreset_flattencategorytrees($results, $child, $categories);
+        } else {
+            $results[] = $categories[$child];
+        }
+    }
+}
+
+function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
+    $fieldname = 'id';
+    switch ($sortby) {
+        case TOOL_BULKRESET_SORT_NAME:
+            $fieldname = 'name';
+            break;
+        case TOOL_BULKRESET_SORT_SORTORDER:
+            $fieldname = 'sortorder';
+            break;
+    }
+
+    $categories = tool_bulkreset_getcategoriesbyid(core_course_category::get_all());
+    $trees = tool_bulkreset_getcategorytrees($categories);
+    tool_bulkreset_hierarchysort($trees, $categories, $fieldname);
+    $results = [];
+    tool_bulkreset_flattencategorytrees($results, $trees, $categories);
+    return $results;
 }
