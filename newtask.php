@@ -7,10 +7,12 @@ require_once(__DIR__ . '/classes/courses_form.php');
 
 admin_externalpage_setup('bulkreset');
 
+$sorttype = optional_param('sort', TOOL_BULKRESET_SORT_SORTORDER, PARAM_INT);
+
+$PAGE->set_context(context_system::instance());
+$PAGE->set_url(new moodle_url('/admin/tool/bulkreset/newtask.php', ['sort' => $sorttype]));
 $PAGE->requires->jquery();
 $PAGE->requires->js(new moodle_url("/{$CFG->admin}/tool/bulkreset/formscript.js"));
-
-$sorttype = optional_param('sort', TOOL_BULKRESET_SORT_SORTORDER, PARAM_INT);
 
 $coursesform = new tool_bulkreset_courses_form("{$CFG->wwwroot}/{$CFG->admin}/tool/bulkreset/resetsettings.php", $sorttype);
 
@@ -22,6 +24,9 @@ $sortoptions = [
     TOOL_BULKRESET_SORT_SORTORDER => 'sortorder',
     TOOL_BULKRESET_SORT_NAME => 'name'
 ];
+if (filter_is_enabled('multilang')) {
+    $sortoptions[TOOL_BULKRESET_SORT_NAMEMULTILANG] = 'namemultilang';
+}
 $options = [];
 foreach ($sortoptions as $value => $sortoption) {
     $options[] = html_writer::tag('option', get_string('sort_' . $sortoption, 'tool_bulkreset'),

@@ -35,7 +35,7 @@ require(['jquery'], $ => {
         const locations = location.href.split('?');
         let params = {};
         if (locations[1]) {
-            params = locations[1].split('&').reduce((obj, curr) => {
+            params = locations[1].replace(',', '&').split('&').reduce((obj, curr) => {
                 const paramsegments = curr.split('=');
                 if (paramsegments.length < 2) {
                     return obj;

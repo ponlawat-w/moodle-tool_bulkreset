@@ -34,5 +34,6 @@ $string['status_unknown'] = 'Unknown';
 
 $string['sort_sortorder'] = 'Sort categories by default order';
 $string['sort_name'] = 'Sort in same parent by category name';
+$string['sort_namemultilang'] = 'Sort in same parent by multilang-filtered category name';
 
 $string['deleteconfirm'] = 'Are you sure you want to delete this schedule?';

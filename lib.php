@@ -11,6 +11,7 @@ const TOOL_BULKRESET_STATUS_FAILED = 5;
 
 const TOOL_BULKRESET_SORT_SORTORDER = 1;
 const TOOL_BULKRESET_SORT_NAME = 2;
+const TOOL_BULKRESET_SORT_NAMEMULTILANG = 3;
 
 function tool_bulkreset_renderselectallbuttons($show = true) {
     $selectall = html_writer::link('javascript:void(0);', get_string('selectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-selectall']);
@@ -172,20 +173,47 @@ function tool_bulkreset_getcategorytrees($categories) {
     return $trees;
 }
 
-function tool_bulkreset_hierarchysort(&$trees, $categories, $field = 'sortorder') {
-    if (count($trees) == 1) {
-        return $trees;
-    }
-    $sortvalues = [];
-    foreach ($trees as $idx => $item) {
-        if (is_array($item)) {
-            tool_bulkreset_hierarchysort($item, $categories, $field);
-            $sortvalues[] = $categories[$idx]->$field;
-        } else {
-            $sortvalues[] = $categories[$item]->$field;
+function tool_bulkreset_filtermultilang($text) {
+    global $TOOL_BULKRESET_FILTER_MULTILANG;
+    $context = context_system::instance();
+    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
+        $filters = filter_get_active_in_context($context);
+        foreach ($filters as $filtername => $localconfig) {
+            if ($filtername == 'multilang') {
+                require_once(__DIR__ . '/../../../filter/multilang/filter.php');
+                $TOOL_BULKRESET_FILTER_MULTILANG = new filter_multilang($context, $localconfig);
+                break;
+            }
         }
     }
-    array_multisort($sortvalues, $trees);
+
+    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
+        throw new moodle_exception('Filter is not active');
+    }
+
+    return $TOOL_BULKRESET_FILTER_MULTILANG->filter($text);
+}
+
+function tool_bulkreset_comparecategory($a, $b, $sortby) {
+    if ($a->depth == $b->depth) {
+        if ($sortby == TOOL_BULKRESET_SORT_NAMEMULTILANG) {
+            if (!filter_is_enabled('multilang')) {
+                return strcmp($a->name, $b->name);
+            }
+            return strcmp(
+                tool_bulkreset_filtermultilang($a->name),
+                tool_bulkreset_filtermultilang($b->name)
+            );
+        }
+        switch ($sortby) {
+            case TOOL_BULKRESET_SORT_SORTORDER:
+                return $a->sortorder - $b->sortorder;
+            case TOOL_BULKRESET_SORT_NAME:
+                return strcmp($a->name, $b->name);
+        }
+        return $a->sortorder - $b->sortorder;
+    }
+    return $a->depth - $b->depth;
 }
 
 function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
@@ -199,20 +227,13 @@ function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
 }
 
 function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
-    $fieldname = 'id';
-    switch ($sortby) {
-        case TOOL_BULKRESET_SORT_NAME:
-            $fieldname = 'name';
-            break;
-        case TOOL_BULKRESET_SORT_SORTORDER:
-            $fieldname = 'sortorder';
-            break;
-    }
-
-    $categories = tool_bulkreset_getcategoriesbyid(core_course_category::get_all());
+    $categories = core_course_category::get_all();
+    usort($categories, function($a, $b) use ($sortby) {
+        return tool_bulkreset_comparecategory($a, $b, $sortby);
+    });
+    $categoriesbyid = tool_bulkreset_getcategoriesbyid($categories);
     $trees = tool_bulkreset_getcategorytrees($categories);
-    tool_bulkreset_hierarchysort($trees, $categories, $fieldname);
     $results = [];
-    tool_bulkreset_flattencategorytrees($results, $trees, $categories);
+    tool_bulkreset_flattencategorytrees($results, $trees, $categoriesbyid);
     return $results;
 }
