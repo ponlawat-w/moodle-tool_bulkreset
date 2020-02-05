@@ -8,7 +8,7 @@ require_once(__DIR__ . '/../lib.php');
 class tool_bulkreset_courses_form extends moodleform {
     public $sort = TOOL_BULKRESET_SORT_SORTORDER;
 
-    public function __construct($actionurl, $sort = TOOL_BULKRESET_SORT_SORTORDER) {
+    public function __construct($actionurl = null, $sort = TOOL_BULKRESET_SORT_SORTORDER) {
         $this->sort = $sort;
         parent::__construct($actionurl);
     }
