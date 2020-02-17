@@ -4,6 +4,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/course/lib.php');
+require_once(__DIR__ . '/../lib.php');
 
 class tool_bulkreset_resetsettings_form extends moodleform {
     /**
@@ -11,12 +12,15 @@ class tool_bulkreset_resetsettings_form extends moodleform {
      */
     public $forwarddata = null;
     public $coursenames;
+    public $inherited = false;
 
-    public function __construct($forwarddata = null) {
+    public function __construct($forwarddata = null, $inherited = false) {
+        $this->inherited = $inherited;
         if ($forwarddata) {
             $this->forwarddata = $forwarddata;
             $this->coursenames = [];
-            foreach ($this->forwarddata->courses as $courseid) {
+            $courseids = $this->getcourseids();
+            foreach ($courseids as $courseid) {
                 $course = get_course($courseid);
                 $this->coursenames[$courseid] = $course ? $course->fullname : 'N/A';
             }
@@ -24,9 +28,24 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         parent::__construct();
     }
 
+    private function getcourseids() {
+        if ($this->inherited) {
+            $courses = get_courses();
+            $courseids = [];
+            foreach ($courses as $course) {
+                $courseids[] = $course->id;
+            }
+            return $courseids;
+        } else if (!isset($this->forwarddata) || !isset($this->forwarddata->courses)) {
+            return [];
+        }
+        return $this->forwarddata->courses;
+    }
+
     private function getroles() {
         $roles = [];
-        foreach ($this->forwarddata->courses as $courseid) {
+        $courseids = $this->getcourseids();
+        foreach ($courseids as $courseid) {
             $courseroles = get_assignable_roles(context_course::instance($courseid));
             foreach ($courseroles as $key => $value) {
                 if (isset($roles[$key])) {
@@ -68,19 +87,28 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     }
 
     public function getforwarddata() {
+        if (!$this->is_submitted()) {
+            return (object)[
+                'courses' => [],
+                'schedule' => 0,
+                'settingstemplate' => null
+            ];
+        }
         $data = $this->get_data();
-        $courseids = (!$data || !$data->courses) ? [] : explode(',', $data->courses);
+        $courseids = (!$data || !$data->courses) ? $this->getcourseids() : explode(',', $data->courses);
         $schedule = isset($data->schedule) && $data->schedule ? $data->schedule : time();
         return (object)[
             'courses' => $courseids,
-            'schedule' => $schedule
+            'schedule' => $schedule,
+            'settingstemplate' => $data->settingstemplate
         ];
     }
 
     public function getresetdata() {
         $courses = [];
 
-        foreach ($this->forwarddata->courses as $courseid) {
+        $courseids = $this->getcourseids();
+        foreach ($courseids as $courseid) {
             $course = get_course($courseid);
             $data = $this->get_data();
             $data->id = $course->id;
@@ -151,18 +179,22 @@ class tool_bulkreset_resetsettings_form extends moodleform {
                 $mod_reset_course_form_definition = $modname.'_reset_course_form_definition';
                 $mod_reset__userdata = $modname.'_reset_userdata';
                 if (file_exists($modfile)) {
-                    $coursesinmod = $this->getcoursesinmod($modname);
-                    if (!$coursesinmod || !count($coursesinmod)) {
-                        continue;
+                    if (!$this->inherited) {
+                        $coursesinmod = $this->getcoursesinmod($modname);
+                        if (!$coursesinmod || !count($coursesinmod)) {
+                            continue;
+                        }
                     }
                     include_once($modfile);
                     if (function_exists($mod_reset_course_form_definition)) {
                         $mod_reset_course_form_definition($mform);
-                        $mform->addElement(
-                            'static',
-                            "coursesinmod_{$modname}",
-                            get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
-                            $this->getcoursesinmodhtml($coursesinmod));
+                        if (!$this->inherited) {
+                            $mform->addElement(
+                                'static',
+                                "coursesinmod_{$modname}",
+                                get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
+                                $this->getcoursesinmodhtml($coursesinmod));
+                        }
                     } else if (!function_exists($mod_reset__userdata)) {
                         $unsupported_mods[] = $mod;
                     }
@@ -180,19 +212,24 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             }
         }
 
-        $mform->addElement('hidden', 'courses', implode(',', $this->forwarddata->courses));
-        $mform->setType('courses', PARAM_TEXT);
+        if (!$this->inherited) {
+            $mform->addElement('hidden', 'courses', implode(',', $this->getcourseids()));
+            $mform->setType('courses', PARAM_TEXT);
+            $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
+            $mform->setType('schedule', PARAM_INT);
+            $mform->addElement('hidden', 'settingstemplate', $this->forwarddata->settingstemplate);
+            $mform->setType('settingstemplate', PARAM_TEXT);
 
-        $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
-        $mform->setType('schedule', PARAM_INT);
-
-        $buttonarray = array();
-        $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('resetcourses', 'tool_bulkreset'));
-        $buttonarray[] = &$mform->createElement('submit', 'selectdefault', get_string('selectdefault'));
-        $buttonarray[] = &$mform->createElement('submit', 'deselectall', get_string('deselectall'));
-        $buttonarray[] = &$mform->createElement('cancel');
-        $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
-        $mform->closeHeaderBefore('buttonar');
+            $buttonarray = array();
+            $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('resetcourses', 'tool_bulkreset'));
+            if (!tool_bulkreset_resetsettingsenabled()) {
+                $buttonarray[] = &$mform->createElement('submit', 'selectdefault', get_string('selectdefault'));
+                $buttonarray[] = &$mform->createElement('submit', 'deselectall', get_string('deselectall'));
+            }
+            $buttonarray[] = &$mform->createElement('cancel');
+            $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+            $mform->closeHeaderBefore('buttonar');
+        }
     }
 
     function load_defaults() {

@@ -237,3 +237,33 @@ function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
     tool_bulkreset_flattencategorytrees($results, $trees, $categoriesbyid);
     return $results;
 }
+
+function tool_bulkreset_resetsettingsenabled() {
+    global $TOOL_BULKRESET_RESETSETTINGSENABLED;
+
+    if (!isset($TOOL_BULKRESET_RESETSETTINGSENABLED)) {
+        $TOOL_BULKRESET_RESETSETTINGSENABLED = false;
+        $tools = core_plugin_manager::instance()->get_plugins_of_type('tool');
+        foreach ($tools as $tool) {
+            if ($tool->name == 'resetsettings') {
+                $TOOL_BULKRESET_RESETSETTINGSENABLED = true;
+                break;
+            }
+        }
+    }
+
+    return $TOOL_BULKRESET_RESETSETTINGSENABLED;
+}
+
+function tool_bulkreset_getsettings() {
+    global $DB;
+    $settings = [
+        'blank' => get_string('settings_blank', 'tool_bulkreset'),
+        'default' => get_string('settings_default', 'tool_bulkreset')
+    ];
+    $templates = $DB->get_records_sql('SELECT id, name FROM {tool_resetsettings_settings} ORDER BY name ASC');
+    foreach ($templates as $template) {
+        $settings[$template->id] = $template->name;
+    }
+    return $settings;
+}

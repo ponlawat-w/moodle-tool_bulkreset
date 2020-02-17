@@ -46,6 +46,20 @@ class tool_bulkreset_courses_form extends moodleform {
 
         $mform->addElement('date_time_selector', 'schedule', get_string('schedule', 'tool_bulkreset'));
 
+        if (tool_bulkreset_resetsettingsenabled()) {
+            $mform->addElement('header', 'settingstemplateheader', get_string('settingstemplateheader', 'tool_bulkreset'));
+
+            $mform->setExpanded('settingstemplateheader', true);
+
+            $settings = tool_bulkreset_getsettings();
+            $mform->addElement('select', 'settingstemplate', get_string('settingstemplate', 'tool_bulkreset'), $settings);
+            $mform->setType('settingstemplate', PARAM_TEXT);
+            $mform->setDefault('settingstemplate', 'blank');
+
+            $mform->addElement('static', 'gotoresetsettings', '',
+                html_writer::link(new moodle_url('/admin/tool/resetsettings'), get_string('gotoresetsettings', 'tool_bulkreset')));
+        }
+
         $this->add_action_buttons(true, get_string('continue'));
     }
 
@@ -62,7 +76,8 @@ class tool_bulkreset_courses_form extends moodleform {
 
         return (object)[
             'courses' => $courseids,
-            'schedule' => $schedule
+            'schedule' => $schedule,
+            'settingstemplate' => $data->settingstemplate
         ];
     }
 }

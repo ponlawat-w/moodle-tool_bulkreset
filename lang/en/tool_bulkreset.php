@@ -37,3 +37,9 @@ $string['sort_name'] = 'Sort in same parent by category name';
 $string['sort_namemultilang'] = 'Sort in same parent by multilang-filtered category name';
 
 $string['deleteconfirm'] = 'Are you sure you want to delete this schedule?';
+
+$string['settingstemplateheader'] = 'Settings';
+$string['settingstemplate'] = 'Settings template';
+$string['settings_blank'] = 'Blank settings';
+$string['settings_default'] = 'Moodle default settings';
+$string['gotoresetsettings'] = 'Edit settings templates';
