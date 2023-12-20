@@ -1,4 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Bulk Course Reset
+ *
+ * @package    tool_bulkreset
+ * @copyright  2020 Ponlawat Weerapanpisit, Adam Jenkins <adam@wisecat.net>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die;
 
@@ -14,16 +36,22 @@ const TOOL_BULKRESET_SORT_NAME = 2;
 const TOOL_BULKRESET_SORT_NAMEMULTILANG = 3;
 
 function tool_bulkreset_renderselectallbuttons($show = true) {
-    $selectall = html_writer::link('javascript:void(0);', get_string('selectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-selectall']);
-    $deselectall = html_writer::link('javascript:void(0);', get_string('deselectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-deselectall']);
+    $selectall = html_writer::link('javascript:void(0);',
+        get_string('selectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-selectall']);
+    $deselectall = html_writer::link('javascript:void(0);',
+        get_string('deselectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-deselectall']);
     return html_writer::div(
         $selectall . ' | ' . $deselectall
-    , '', ['style' => 'display:' . ($show ? 'block':'none') . ';']);
+    , '', ['style' => 'display:' . ($show ? 'block' : 'none') . ';']);
 }
 
 function tool_bulkreset_renderselectallallbuttons() {
-    $selectallall = html_writer::link('javascript:void(0);', get_string('selectallall', 'tool_bulkreset'), ['id' => 'tool-bulkreset-selectallall', 'class' => 'btn btn-primary']);
-    $deselectallall = html_writer::link('javascript:void(0);', get_string('deselectallall', 'tool_bulkreset'), ['id' => 'tool-bulkreset-deselectallall', 'class' => 'btn btn-default']);
+    $selectallall = html_writer::link('javascript:void(0);',
+       get_string('selectallall', 'tool_bulkreset'),
+       ['id' => 'tool-bulkreset-selectallall', 'class' => 'btn btn-primary']);
+    $deselectallall = html_writer::link('javascript:void(0);',
+       get_string('deselectallall', 'tool_bulkreset'),
+       ['id' => 'tool-bulkreset-deselectallall', 'class' => 'btn btn-default']);
     return html_writer::tag('p',
         $selectallall . ' ' . $deselectallall
     );
@@ -57,18 +85,18 @@ function tool_bulkreset_exceptiontoassoc($exorerr) {
         'code' => $exorerr->getCode(),
         'file' => $exorerr->getFile(),
         'line' => $exorerr->getLine(),
-        'trace' => $exorerr->getTraceAsString()
+        'trace' => $exorerr->getTraceAsString(),
     ];
 }
 
 function tool_bulkreset_geterrortable($item) {
     $table = new html_table();
     $table->data = [
-        [html_writer::span('message','',  ['style' => 'font-weight: bold;']), $item->message],
+        [html_writer::span('message', '',  ['style' => 'font-weight: bold;']), $item->message],
         [html_writer::span('code', '', ['style' => 'font-weight: bold;']), $item->code],
         [html_writer::span('file', '', ['style' => 'font-weight: bold;']), $item->file],
         [html_writer::span('line', '', ['style' => 'font-weight: bold;']), $item->line],
-        [html_writer::span('trace', '', ['style' => 'font-weight: bold;']), nl2br(htmlspecialchars($item->trace))]
+        [html_writer::span('trace', '', ['style' => 'font-weight: bold;']), nl2br(htmlspecialchars($item->trace))],
     ];
     return $table;
 }
@@ -114,7 +142,7 @@ function tool_bulkreset_executeschedule($schedule) {
         $results[] = [
             'courseid' => $course->id,
             'success' => $coursesuccess,
-            'result' => $result
+            'result' => $result,
         ];
     }
 
@@ -174,24 +202,24 @@ function tool_bulkreset_getcategorytrees($categories) {
 }
 
 function tool_bulkreset_filtermultilang($text) {
-    global $TOOL_BULKRESET_FILTER_MULTILANG;
+    global $toolbulkresetfiltermultilang;
     $context = context_system::instance();
-    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
+    if (!isset($toolbulkresetfiltermultilang)) {
         $filters = filter_get_active_in_context($context);
         foreach ($filters as $filtername => $localconfig) {
             if ($filtername == 'multilang') {
                 require_once(__DIR__ . '/../../../filter/multilang/filter.php');
-                $TOOL_BULKRESET_FILTER_MULTILANG = new filter_multilang($context, $localconfig);
+                $toolbulkresetfiltermultilang = new filter_multilang($context, $localconfig);
                 break;
             }
         }
     }
 
-    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
+    if (!isset($toolbulkresetfiltermultilang)) {
         throw new moodle_exception('Filter is not active');
     }
 
-    return $TOOL_BULKRESET_FILTER_MULTILANG->filter($text);
+    return $toolbulkresetfiltermultilang->filter($text);
 }
 
 function tool_bulkreset_comparecategory($a, $b, $sortby) {
@@ -239,27 +267,27 @@ function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
 }
 
 function tool_bulkreset_resetsettingsenabled() {
-    global $TOOL_BULKRESET_RESETSETTINGSENABLED;
+    global $toolbulkresetresetsettingsenabled;
 
-    if (!isset($TOOL_BULKRESET_RESETSETTINGSENABLED)) {
-        $TOOL_BULKRESET_RESETSETTINGSENABLED = false;
+    if (!isset($toolbulkresetresetsettingsenabled)) {
+        $toolbulkresetresetsettingsenabled = false;
         $tools = core_plugin_manager::instance()->get_plugins_of_type('tool');
         foreach ($tools as $tool) {
             if ($tool->name == 'resetsettings') {
-                $TOOL_BULKRESET_RESETSETTINGSENABLED = true;
+                $toolbulkresetresetsettingsenabled = true;
                 break;
             }
         }
     }
 
-    return $TOOL_BULKRESET_RESETSETTINGSENABLED;
+    return $toolbulkresetresetsettingsenabled;
 }
 
 function tool_bulkreset_getsettings() {
     global $DB;
     $settings = [
         'blank' => get_string('settings_blank', 'tool_bulkreset'),
-        'default' => get_string('settings_default', 'tool_bulkreset')
+        'default' => get_string('settings_default', 'tool_bulkreset'),
     ];
     $templates = $DB->get_records_sql('SELECT id, name FROM {tool_resetsettings_settings} ORDER BY name ASC');
     foreach ($templates as $template) {
