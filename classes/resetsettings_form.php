@@ -1,4 +1,26 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Bulk Course Reset
+ *
+ * @package    tool_bulkreset
+ * @copyright  2020 Ponlawat Weerapanpisit, Adam Jenkins <adam@wisecat.net>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -75,7 +97,8 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             $params[] = '?';
         }
         $paramsql = implode(',', $params);
-        return $DB->get_records_sql("SELECT DISTINCT course FROM {{$modname}} WHERE course IN ({$paramsql})", $this->forwarddata->courses);
+        return $DB->get_records_sql("SELECT DISTINCT course FROM {{$modname}} WHERE course IN ({$paramsql})",
+        $this->forwarddata->courses);
     }
 
     private function getcoursesinmodhtml($coursesinmodrecord) {
@@ -91,7 +114,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             return (object)[
                 'courses' => [],
                 'schedule' => 0,
-                'settingstemplate' => null
+                'settingstemplate' => null,
             ];
         }
         $data = $this->get_data();
@@ -100,7 +123,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         return (object)[
             'courses' => $courseids,
             'schedule' => $schedule,
-            'settingstemplate' => $data->settingstemplate
+            'settingstemplate' => $data->settingstemplate,
         ];
     }
 
@@ -132,9 +155,9 @@ class tool_bulkreset_resetsettings_form extends moodleform {
 
         $mform->addElement('header', 'generalheader', get_string('general'));
 
-        $mform->addElement('date_time_selector', 'reset_start_date', get_string('startdate'), array('optional' => true));
+        $mform->addElement('date_time_selector', 'reset_start_date', get_string('startdate'), ['optional' => true]);
         $mform->addHelpButton('reset_start_date', 'startdate');
-        $mform->addElement('date_time_selector', 'reset_end_date', get_string('enddate'), array('optional' => true));
+        $mform->addElement('date_time_selector', 'reset_end_date', get_string('enddate'), ['optional' => true]);
         $mform->addHelpButton('reset_end_date', 'enddate');
         $mform->addElement('checkbox', 'reset_events', get_string('deleteevents', 'calendar'));
         $mform->addElement('checkbox', 'reset_notes', get_string('deletenotes', 'notes'));
@@ -148,7 +171,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
 
         $roles = $this->getroles();
 
-        $mform->addElement('select', 'unenrol_users', get_string('unenrolroleusers', 'enrol'), $roles, array('multiple' => 'multiple'));
+        $mform->addElement('select', 'unenrol_users', get_string('unenrolroleusers', 'enrol'), $roles, ['multiple' => 'multiple']);
         $mform->addElement('checkbox', 'reset_roles_overrides', get_string('deletecourseoverrides', 'role'));
         $mform->setAdvanced('reset_roles_overrides');
         $mform->addElement('checkbox', 'reset_roles_local', get_string('deletelocalroles', 'role'));
@@ -171,13 +194,13 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         $mform->addElement('checkbox', 'reset_groupings_members', get_string('removegroupingsmembers', 'group'));
         $mform->disabledIf('reset_groupings_members', 'reset_groupings_remove', 'checked');
 
-        $unsupported_mods = array();
+        $unsupportedmods = [];
         if ($allmods = $DB->get_records('modules') ) {
             foreach ($allmods as $mod) {
                 $modname = $mod->name;
                 $modfile = $CFG->dirroot."/mod/$modname/lib.php";
-                $mod_reset_course_form_definition = $modname.'_reset_course_form_definition';
-                $mod_reset__userdata = $modname.'_reset_userdata';
+                $modresetcourseformdefinition = $modname.'_reset_course_form_definition';
+                $modresetuserdata = $modname.'_reset_userdata';
                 if (file_exists($modfile)) {
                     if (!$this->inherited) {
                         $coursesinmod = $this->getcoursesinmod($modname);
@@ -186,8 +209,8 @@ class tool_bulkreset_resetsettings_form extends moodleform {
                         }
                     }
                     include_once($modfile);
-                    if (function_exists($mod_reset_course_form_definition)) {
-                        $mod_reset_course_form_definition($mform);
+                    if (function_exists($modresetcourseformdefinition)) {
+                        $modresetcourseformdefinition($mform);
                         if (!$this->inherited) {
                             $mform->addElement(
                                 'static',
@@ -195,18 +218,18 @@ class tool_bulkreset_resetsettings_form extends moodleform {
                                 get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
                                 $this->getcoursesinmodhtml($coursesinmod));
                         }
-                    } else if (!function_exists($mod_reset__userdata)) {
-                        $unsupported_mods[] = $mod;
+                    } else if (!function_exists($modresetuserdata)) {
+                        $unsupportedmods[] = $mod;
                     }
                 } else {
                     debugging('Missing lib.php in '.$modname.' module');
                 }
             }
         }
-        // mention unsupported mods
-        if (!empty($unsupported_mods)) {
+        // Mention unsupported mods.
+        if (!empty($unsupportedmods)) {
             $mform->addElement('header', 'unsupportedheader', get_string('resetnotimplemented'));
-            foreach($unsupported_mods as $mod) {
+            foreach ($unsupportedmods as $mod) {
                 $mform->addElement('static', 'unsup'.$mod->name, get_string('modulenameplural', $mod->name));
                 $mform->setAdvanced('unsup'.$mod->name);
             }
@@ -220,14 +243,14 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             $mform->addElement('hidden', 'settingstemplate', $this->forwarddata->settingstemplate);
             $mform->setType('settingstemplate', PARAM_TEXT);
 
-            $buttonarray = array();
+            $buttonarray = [];
             $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('resetcourses', 'tool_bulkreset'));
             if (!tool_bulkreset_resetsettingsenabled()) {
                 $buttonarray[] = &$mform->createElement('submit', 'selectdefault', get_string('selectdefault'));
                 $buttonarray[] = &$mform->createElement('submit', 'deselectall', get_string('deselectall'));
             }
             $buttonarray[] = &$mform->createElement('cancel');
-            $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
+            $mform->addGroup($buttonarray, 'buttonar', '', [' '], false);
             $mform->closeHeaderBefore('buttonar');
         }
     }
@@ -237,7 +260,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
 
         $mform =& $this->_form;
 
-        $defaults = array ('reset_events'=>1, 'reset_roles_local'=>1, 'reset_gradebook_grades'=>1, 'reset_notes'=>1);
+        $defaults = ['reset_events' => 1, 'reset_roles_local' => 1, 'reset_gradebook_grades' => 1, 'reset_notes' => 1];
 
         // Set student as default in unenrol user list, if role with student archetype exist.
         if ($studentrole = get_archetype_roles('student')) {
@@ -248,11 +271,11 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             foreach ($allmods as $mod) {
                 $modname = $mod->name;
                 $modfile = $CFG->dirroot."/mod/$modname/lib.php";
-                $mod_reset_course_form_defaults = $modname.'_reset_course_form_defaults';
+                $modresetcourseformdefaults = $modname.'_reset_course_form_defaults';
                 if (file_exists($modfile)) {
                     @include_once($modfile);
-                    if (function_exists($mod_reset_course_form_defaults)) {
-                        if ($moddefs = $mod_reset_course_form_defaults($COURSE)) {
+                    if (function_exists($modresetcourseformdefaults)) {
+                        if ($moddefs = $modresetcourseformdefaults($COURSE)) {
                             $defaults = $defaults + $moddefs;
                         }
                     }
@@ -260,7 +283,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
             }
         }
 
-        foreach ($defaults as $element=>$default) {
+        foreach ($defaults as $element => $default) {
             $mform->setDefault($element, $default);
         }
     }
