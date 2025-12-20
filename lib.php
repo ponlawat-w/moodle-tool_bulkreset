@@ -1,80 +1,182 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die;
+/**
+ * Plugin library.
+ *
+ * @package     tool_bulkreset
+ * @copyright   2020 Ponlawat WEERAPANPISIT <ponlawat_w@outlook.co.th>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
+/** @var int TOOL_BULKRESET_STATUS_SCHEDULED schedule status scheduled */
 const TOOL_BULKRESET_STATUS_SCHEDULED = 0;
+/** @var int TOOL_BULKRESET_STATUS_TOBEEXECUTED schedule status tobeexecuted */
 const TOOL_BULKRESET_STATUS_TOBEEXECUTED = 1;
+/** @var int TOOL_BULKRESET_STATUS_EXECUTING schedule status executing */
 const TOOL_BULKRESET_STATUS_EXECUTING = 2;
+/** @var int TOOL_BULKRESET_STATUS_SUCCESS schedule status success */
 const TOOL_BULKRESET_STATUS_SUCCESS = 3;
+/** @var int TOOL_BULKRESET_STATUS_WARNING schedule status warning */
 const TOOL_BULKRESET_STATUS_WARNING = 4;
+/** @var int TOOL_BULKRESET_STATUS_FAILED schedule status failed */
 const TOOL_BULKRESET_STATUS_FAILED = 5;
 
+/** @var int TOOL_BULKRESET_SORT_SORTORDER sort order by sortorder */
 const TOOL_BULKRESET_SORT_SORTORDER = 1;
+/** @var int TOOL_BULKRESET_SORT_NAME sort order by name */
 const TOOL_BULKRESET_SORT_NAME = 2;
+/** @var int TOOL_BULKRESET_SORT_NAMEMULTILANG sort order by namemultilang */
 const TOOL_BULKRESET_SORT_NAMEMULTILANG = 3;
 
+/**
+ * Render select all buttons.
+ *
+ * @param bool $show
+ * @return string
+ */
 function tool_bulkreset_renderselectallbuttons($show = true) {
-    $selectall = html_writer::link('javascript:void(0);', get_string('selectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-selectall']);
-    $deselectall = html_writer::link('javascript:void(0);', get_string('deselectall', 'tool_bulkreset'), ['class' => 'tool-bulkreset-deselectall']);
-    return html_writer::div(
-        $selectall . ' | ' . $deselectall
-    , '', ['style' => 'display:' . ($show ? 'block':'none') . ';']);
+    $selectall = \core\output\html_writer::link(
+        'javascript:void(0);',
+        get_string('selectall', 'tool_bulkreset'),
+        ['class' => 'tool-bulkreset-selectall']
+    );
+    $deselectall = \core\output\html_writer::link(
+        'javascript:void(0);',
+        get_string('deselectall', 'tool_bulkreset'),
+        ['class' => 'tool-bulkreset-deselectall']
+    );
+    return \core\output\html_writer::div(
+        $selectall . ' | ' . $deselectall,
+        '',
+        ['style' => 'display: ' . ($show ? 'block' : 'none') . ';']
+    );
 }
 
+/**
+ * Render select all buttons.
+ *
+ * @return string
+ */
 function tool_bulkreset_renderselectallallbuttons() {
-    $selectallall = html_writer::link('javascript:void(0);', get_string('selectallall', 'tool_bulkreset'), ['id' => 'tool-bulkreset-selectallall', 'class' => 'btn btn-primary']);
-    $deselectallall = html_writer::link('javascript:void(0);', get_string('deselectallall', 'tool_bulkreset'), ['id' => 'tool-bulkreset-deselectallall', 'class' => 'btn btn-default']);
-    return html_writer::tag('p',
+    $selectallall = \core\output\html_writer::link(
+        'javascript:void(0);',
+        get_string('selectallall', 'tool_bulkreset'),
+        ['id' => 'tool-bulkreset-selectallall', 'class' => 'btn btn-primary']
+    );
+    $deselectallall = \core\output\html_writer::link(
+        'javascript:void(0);',
+        get_string('deselectallall', 'tool_bulkreset'),
+        ['id' => 'tool-bulkreset-deselectallall', 'class' => 'btn btn-default']
+    );
+    return \core\output\html_writer::tag(
+        'p',
         $selectallall . ' ' . $deselectallall
     );
 }
 
+/**
+ * Get status text.
+ *
+ * @param int $status
+ * @return string
+ */
 function tool_bulkreset_getstatustext($status) {
     switch ($status) {
-        case TOOL_BULKRESET_STATUS_SCHEDULED: return get_string('status_scheduled', 'tool_bulkreset');
-        case TOOL_BULKRESET_STATUS_TOBEEXECUTED: return get_string('status_tobeexecuted', 'tool_bulkreset');
-        case TOOL_BULKRESET_STATUS_EXECUTING: return get_string('status_executing', 'tool_bulkreset');
-        case TOOL_BULKRESET_STATUS_SUCCESS: return get_string('status_success', 'tool_bulkreset');
-        case TOOL_BULKRESET_STATUS_WARNING: return get_string('status_warning', 'tool_bulkreset');
-        case TOOL_BULKRESET_STATUS_FAILED: return get_string('status_failed', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_SCHEDULED:
+            return get_string('status_scheduled', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_TOBEEXECUTED:
+            return get_string('status_tobeexecuted', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_EXECUTING:
+            return get_string('status_executing', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_SUCCESS:
+            return get_string('status_success', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_WARNING:
+            return get_string('status_warning', 'tool_bulkreset');
+        case TOOL_BULKRESET_STATUS_FAILED:
+            return get_string('status_failed', 'tool_bulkreset');
     }
     return get_string('status_unknown', 'tool_bulkreset');
 }
 
+/**
+ * Get status CSS class.
+ *
+ * @param string $status
+ * @return string
+ */
 function tool_bulkreset_getstatusclass($status) {
     switch ($status) {
-        case TOOL_BULKRESET_STATUS_EXECUTING: return 'text-primary';
-        case TOOL_BULKRESET_STATUS_SUCCESS: return 'text-success';
-        case TOOL_BULKRESET_STATUS_WARNING: return 'text-warning';
-        case TOOL_BULKRESET_STATUS_FAILED: return 'text-danger';
+        case TOOL_BULKRESET_STATUS_EXECUTING:
+            return 'text-primary';
+        case TOOL_BULKRESET_STATUS_SUCCESS:
+            return 'text-success';
+        case TOOL_BULKRESET_STATUS_WARNING:
+            return 'text-warning';
+        case TOOL_BULKRESET_STATUS_FAILED:
+            return 'text-danger';
     }
     return '';
 }
 
+/**
+ * Convert exception to associated array
+ *
+ * @param \Exception|\Error $exorerr
+ * @return array
+ */
 function tool_bulkreset_exceptiontoassoc($exorerr) {
     return [
         'message' => $exorerr->getMessage(),
         'code' => $exorerr->getCode(),
         'file' => $exorerr->getFile(),
         'line' => $exorerr->getLine(),
-        'trace' => $exorerr->getTraceAsString()
+        'trace' => $exorerr->getTraceAsString(),
     ];
 }
 
+/**
+ * Get error table.
+ *
+ * @param \stdClass $item
+ * @return \core_table\output\html_table
+ */
 function tool_bulkreset_geterrortable($item) {
-    $table = new html_table();
+    $table = new \core_table\output\html_table();
     $table->data = [
-        [html_writer::span('message','',  ['style' => 'font-weight: bold;']), $item->message],
-        [html_writer::span('code', '', ['style' => 'font-weight: bold;']), $item->code],
-        [html_writer::span('file', '', ['style' => 'font-weight: bold;']), $item->file],
-        [html_writer::span('line', '', ['style' => 'font-weight: bold;']), $item->line],
-        [html_writer::span('trace', '', ['style' => 'font-weight: bold;']), nl2br(htmlspecialchars($item->trace))]
+        [\core\output\html_writer::span('message', '', ['style' => 'font-weight: bold;']), $item->message],
+        [\core\output\html_writer::span('code', '', ['style' => 'font-weight: bold;']), $item->code],
+        [\core\output\html_writer::span('file', '', ['style' => 'font-weight: bold;']), $item->file],
+        [\core\output\html_writer::span('line', '', ['style' => 'font-weight: bold;']), $item->line],
+        [\core\output\html_writer::span('trace', '', ['style' => 'font-weight: bold;']), nl2br(htmlspecialchars($item->trace))],
     ];
     return $table;
 }
 
+/**
+ * Execute schedule
+ *
+ * @param \stdClass $schedule
+ * @return void
+ */
 function tool_bulkreset_executeschedule($schedule) {
     global $DB;
+    /** @var \moodle_database $DB */
+    $DB;
+
     $data = json_decode($schedule->data);
     $schedule->status = TOOL_BULKRESET_STATUS_EXECUTING;
     $DB->update_record('tool_bulkreset_schedules', $schedule);
@@ -114,7 +216,7 @@ function tool_bulkreset_executeschedule($schedule) {
         $results[] = [
             'courseid' => $course->id,
             'success' => $coursesuccess,
-            'result' => $result
+            'result' => $result,
         ];
     }
 
@@ -131,6 +233,12 @@ function tool_bulkreset_executeschedule($schedule) {
     return true;
 }
 
+/**
+ * Get categories array by ID key
+ *
+ * @param array $categories
+ * @return array
+ */
 function tool_bulkreset_getcategoriesbyid($categories) {
     $results = [];
     foreach ($categories as $category) {
@@ -139,6 +247,13 @@ function tool_bulkreset_getcategoriesbyid($categories) {
     return $results;
 }
 
+/**
+ * Get category path names
+ *
+ * @param \stdClass $category
+ * @param \stdClass[] $categories
+ * @return string[]
+ */
 function tool_bulkreset_getcategorypathnames($category, $categories) {
     $paths = explode('/', $category->path);
     $pathnames = [];
@@ -151,6 +266,12 @@ function tool_bulkreset_getcategorypathnames($category, $categories) {
     return $pathnames;
 }
 
+/**
+ * Get category tree
+ *
+ * @param \stdClass[] $categories
+ * @return array
+ */
 function tool_bulkreset_getcategorytrees($categories) {
     $trees = [];
     foreach ($categories as $category) {
@@ -173,27 +294,41 @@ function tool_bulkreset_getcategorytrees($categories) {
     return $trees;
 }
 
+/**
+ * Filter multilang
+ *
+ * @param string $text
+ * @return string
+ */
 function tool_bulkreset_filtermultilang($text) {
-    global $TOOL_BULKRESET_FILTER_MULTILANG;
+    global $toolbulkresetfiltermultilang;
     $context = context_system::instance();
-    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
+    if (!isset($toolbulkresetfiltermultilang)) {
         $filters = filter_get_active_in_context($context);
         foreach ($filters as $filtername => $localconfig) {
             if ($filtername == 'multilang') {
                 require_once(__DIR__ . '/../../../filter/multilang/filter.php');
-                $TOOL_BULKRESET_FILTER_MULTILANG = new filter_multilang($context, $localconfig);
+                $toolbulkresetfiltermultilang = new \filter_multilang\text_filter($context, $localconfig);
                 break;
             }
         }
     }
 
-    if (!isset($TOOL_BULKRESET_FILTER_MULTILANG)) {
-        throw new moodle_exception('Filter is not active');
+    if (!isset($toolbulkresetfiltermultilang)) {
+        throw new \core\exception\moodle_exception('Filter is not active');
     }
 
-    return $TOOL_BULKRESET_FILTER_MULTILANG->filter($text);
+    return $toolbulkresetfiltermultilang->filter($text);
 }
 
+/**
+ * Compare category.
+ *
+ * @param \stdClass $a
+ * @param \stdClass $b
+ * @param int $sortby
+ * @return int
+ */
 function tool_bulkreset_comparecategory($a, $b, $sortby) {
     if ($a->depth == $b->depth) {
         if ($sortby == TOOL_BULKRESET_SORT_NAMEMULTILANG) {
@@ -216,6 +351,14 @@ function tool_bulkreset_comparecategory($a, $b, $sortby) {
     return $a->depth - $b->depth;
 }
 
+/**
+ * Flatten category trees.
+ *
+ * @param \stdClass[] &$results
+ * @param array $trees
+ * @param \stdClass[] $categories
+ * @return void
+ */
 function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
     foreach ($trees as $child) {
         if (is_array($child)) {
@@ -226,11 +369,20 @@ function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
     }
 }
 
+/**
+ * Get categories
+ *
+ * @param int $sortby
+ * @return array
+ */
 function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
     $categories = core_course_category::get_all();
-    usort($categories, function($a, $b) use ($sortby) {
-        return tool_bulkreset_comparecategory($a, $b, $sortby);
-    });
+    usort(
+        $categories,
+        function ($a, $b) use ($sortby) {
+            return tool_bulkreset_comparecategory($a, $b, $sortby);
+        }
+    );
     $categoriesbyid = tool_bulkreset_getcategoriesbyid($categories);
     $trees = tool_bulkreset_getcategorytrees($categories);
     $results = [];
@@ -238,28 +390,38 @@ function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
     return $results;
 }
 
+/**
+ * Test if reset settings are enabled.
+ *
+ * @return bool
+ */
 function tool_bulkreset_resetsettingsenabled() {
-    global $TOOL_BULKRESET_RESETSETTINGSENABLED;
+    global $toolbulkresetresetsettingsenabled;
 
-    if (!isset($TOOL_BULKRESET_RESETSETTINGSENABLED)) {
-        $TOOL_BULKRESET_RESETSETTINGSENABLED = false;
+    if (!isset($toolbulkresetresetsettingsenabled)) {
+        $toolbulkresetresetsettingsenabled = false;
         $tools = core_plugin_manager::instance()->get_plugins_of_type('tool');
         foreach ($tools as $tool) {
             if ($tool->name == 'resetsettings') {
-                $TOOL_BULKRESET_RESETSETTINGSENABLED = true;
+                $toolbulkresetresetsettingsenabled = true;
                 break;
             }
         }
     }
 
-    return $TOOL_BULKRESET_RESETSETTINGSENABLED;
+    return $toolbulkresetresetsettingsenabled;
 }
 
+/**
+ * Get settings
+ *
+ * @return array
+ */
 function tool_bulkreset_getsettings() {
     global $DB;
     $settings = [
         'blank' => get_string('settings_blank', 'tool_bulkreset'),
-        'default' => get_string('settings_default', 'tool_bulkreset')
+        'default' => get_string('settings_default', 'tool_bulkreset'),
     ];
     $templates = $DB->get_records_sql('SELECT id, name FROM {tool_resetsettings_settings} ORDER BY name ASC');
     foreach ($templates as $template) {

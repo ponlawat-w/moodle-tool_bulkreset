@@ -6,11 +6,11 @@
     <TABLES>
         <TABLE NAME="tool_bulkreset_schedules" COMMENT="Bulk reset schedules">
             <FIELDS>
-                <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" />
-                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="status" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" />
-                <FIELD NAME="data" SEQUENCE="false" TYPE="text" NOTNULL="false" />
-                <FIELD NAME="result" SEQUENCE="false" TYPE="text" NOTNULL="false" />
+                <FIELD NAME="id" SEQUENCE="true" TYPE="int" NOTNULL="true" LENGTH="11" COMMENT="Schedule ID." />
+                <FIELD NAME="starttime" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" COMMENT="Schedule start timestamp." />
+                <FIELD NAME="status" SEQUENCE="false" TYPE="int" NOTNULL="true" DEFAULT="0" LENGTH="11" COMMENT="Schedule status." />
+                <FIELD NAME="data" SEQUENCE="false" TYPE="text" NOTNULL="false" COMMENT="Schedule data in JSON format." />
+                <FIELD NAME="result" SEQUENCE="false" TYPE="text" NOTNULL="false" COMMENT="SChedule result in JSON format." />
             </FIELDS>
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
