@@ -1,0 +1,46 @@
+name: Plugin Release
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  get-version:
+    name: Get version info
+    uses: ./.github/workflows/get-version.yml
+
+  release:
+    name: Release
+    needs: [ci, get-version]
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ needs.get-version.outputs.plugin-release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Push to version branch
+        run: |
+          git config --global user.name "ponlawat-w"
+          git config --global user.email "ponlawat_w@outlook.co.th"
+          git checkout -b ${{ needs.get-version.outputs.branch-name }}
+          git push -f -u origin ${{ needs.get-version.outputs.branch-name }}
+      - name: Publish Tag
+        run: |
+          git config --global user.name "ponlawat-w"
+          git config --global user.email "ponlawat_w@outlook.co.th"
+          git tag -fa ${{ needs.get-version.outputs.plugin-release }} -m "${{ needs.get-version.outputs.plugin-release }} - ${{ needs.get-version.outputs.plugin-version }}"
+          git push --force origin ${{ needs.get-version.outputs.plugin-release }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.get-version.outputs.plugin-release }}
+          name: ${{ needs.get-version.outputs.plugin-release }}
+          body: ${{ needs.get-version.outputs.plugin-release }} - ${{ needs.get-version.outputs.plugin-version }}
