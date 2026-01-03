@@ -1,0 +1,65 @@
+name: Retrieve Plugin Version from version.php
+on:
+  workflow_call:
+    inputs:
+      repository:
+        type: string
+        default: ${{ github.repository }}
+      ref:
+        type: string
+        default: ''
+      require-stable:
+        type: boolean
+        default: true
+    outputs:
+      plugin-component:
+        description: Plugin component
+        value: ${{ jobs.get-version.outputs.plugin-component }}
+      plugin-release:
+        description: Plugin release
+        value: ${{ jobs.get-version.outputs.plugin-release }}
+      plugin-version:
+        description: Plugin version
+        value: ${{ jobs.get-version.outputs.plugin-version }}
+      plugin-requires:
+        description: Plugin requires
+        value: ${{ jobs.get-version.outputs.plugin-requires }}
+      plugin-maturity:
+        description: Plugin maturity
+        value: ${{ jobs.get-version.outputs.plugin-maturity }}
+      plugin-dependencies:
+        description: Plugin dependencies (JSON text)
+        value: ${{ jobs.get-version.outputs.plugin-dependencies }}
+      branch-name:
+        description: Branch name
+        value: ${{ jobs.get-version.outputs.branch-name }}
+jobs:
+  get-version:
+    name: Get plugin version from version.php
+    runs-on: ubuntu-latest
+    outputs:
+      plugin-component: ${{ steps.plugin-info.outputs.PLUGIN_COMPONENT }}
+      plugin-release: ${{ steps.plugin-info.outputs.PLUGIN_RELEASE }}
+      plugin-version: ${{ steps.plugin-info.outputs.PLUGIN_VERSION }}
+      plugin-requires: ${{ steps.plugin-info.outputs.PLUGIN_REQUIRES }}
+      plugin-maturity: ${{ steps.plugin-info.outputs.PLUGIN_MATURITY }}
+      plugin-dependencies: ${{ steps.plugin-info.outputs.PLUGIN_DEPENDENCIES }}
+      branch-name: ${{ steps.get-branch.outputs.BRANCH_NAME }}
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.0
+          ini-values: max_input_vars=5000
+          coverage: none
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.ref }}
+      - name: Get plugin information
+        id: plugin-info
+        run: php -r 'define("MOODLE_INTERNAL",1);define("MATURITY_ALPHA",50);define("MATURITY_BETA",100);define("MATURITY_RC",150);define("MATURITY_STABLE",200);define("ANY_VERSION","any");$plugin=new stdClass();include_once("version.php");$plugin->maturity!=200&&throw new Exception("Requires plugin maturity to be stable to release!");echo "PLUGIN_COMPONENT=".(isset($plugin->component)?$plugin->component:"")."\nPLUGIN_RELEASE=".(isset($plugin->release)?$plugin->release:"")."\nPLUGIN_VERSION=".(isset($plugin->version)?$plugin->version:"")."\nPLUGIN_REQUIRES=".(isset($plugin->requires)?$plugin->requires:"")."\nPLUGIN_MATURITY=".(isset($plugin->maturity)?$plugin->maturity:"")."\nPLUGIN_DEPENDENCIES=".(isset($plugin->dependencies)?json_encode($plugin->dependencies):"{}");' >> $GITHUB_OUTPUT
+      - name: Get branch name
+        id: get-branch
+        run: php -r 'echo "BRANCH_NAME=".preg_replace("/(\\(|\\))/", "", strtolower(str_replace(" ", "-", preg_replace("/(\\d+)\\.(\\d+)\\.(\\d+)(.*)/","v$1.$2$4", "${{ steps.plugin-info.outputs.PLUGIN_RELEASE }}"))));'  >> $GITHUB_OUTPUT

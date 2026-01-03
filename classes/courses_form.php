@@ -1,22 +1,59 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Couses form
+ *
+ * @package     tool_bulkreset
+ * @copyright   2020 Ponlawat WEERAPANPISIT <ponlawat_w@outlook.co.th>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once(__DIR__ . '/../lib.php');
 
+/**
+ * Courses form
+ */
 class tool_bulkreset_courses_form extends moodleform {
+    /** @var int $sort */
     public $sort = TOOL_BULKRESET_SORT_SORTORDER;
 
+    /**
+     * Constructor
+     *
+     * @param string|null $actionurl URL to send data after submission
+     * @param int $sort Course category sort type
+     */
     public function __construct($actionurl = null, $sort = TOOL_BULKRESET_SORT_SORTORDER) {
         $this->sort = $sort;
         parent::__construct($actionurl);
     }
 
+    /**
+     * Form definition
+     *
+     * @return void
+     */
     public function definition() {
         $mform = $this->_form;
 
-        $mform->addElement('html', html_writer::tag('p', get_string('selectcourses', 'tool_bulkreset')));
+        $mform->addElement('html', \core\output\html_writer::tag('p', get_string('selectcourses', 'tool_bulkreset')));
 
         $mform->addElement('html', tool_bulkreset_renderselectallallbuttons());
 
@@ -26,7 +63,7 @@ class tool_bulkreset_courses_form extends moodleform {
                 continue;
             }
 
-            $headername = "coursecategory_{$category->id}";
+            $headername = 'coursecategory_' . $category->id;
             $mform->addElement('header', $headername, $category->get_nested_name(false));
             $mform->setExpanded($headername, true);
 
@@ -34,12 +71,11 @@ class tool_bulkreset_courses_form extends moodleform {
             $mform->addElement('html', tool_bulkreset_renderselectallbuttons(count($courses) > 1));
 
             foreach ($courses as $course) {
-                $mform->addElement('advcheckbox', "courses[{$course->id}]", $course->fullname, '', ['courses' => 1]);
-                $mform->setDefault("courses[{$course->id}]", 1);
+                $checkboxname = 'courses[' . $course->id . ']';
+                $mform->addElement('advcheckbox', $checkboxname, $course->fullname);
+                $mform->setDefault($checkboxname, true);
             }
         }
-
-        $mform->addElement('html', html_writer::start_tag('hr'));
 
         $mform->addElement('header', 'schedulingheader', get_string('scheduling', 'tool_bulkreset'));
         $mform->setExpanded('schedulingheader', true);
@@ -56,13 +92,38 @@ class tool_bulkreset_courses_form extends moodleform {
             $mform->setType('settingstemplate', PARAM_TEXT);
             $mform->setDefault('settingstemplate', 'blank');
 
-            $mform->addElement('static', 'gotoresetsettings', '',
-                html_writer::link(new moodle_url('/admin/tool/resetsettings'), get_string('gotoresetsettings', 'tool_bulkreset')));
+            $mform->addElement(
+                'static',
+                'gotoresetsettings',
+                '',
+                \core\output\html_writer::link(
+                    new \core\url('/admin/tool/resetsettings'),
+                    get_string('gotoresetsettings', 'tool_bulkreset')
+                )
+            );
         }
 
         $this->add_action_buttons(true, get_string('continue'));
     }
 
+    /**
+     * Display form
+     *
+     * @return void
+     */
+    public function display() {
+        global $PAGE;
+        /** @var \moodle_page $PAGE */
+        $PAGE;
+        $PAGE->requires->js_call_amd('tool_bulkreset/formscript', 'init');
+        return parent::display();
+    }
+
+    /**
+     * Get schedule data to be forwarded to resetsettings_form.
+     *
+     * @return \stdClass
+     */
     public function getforwarddata() {
         $data = $this->get_submitted_data();
         $courseids = [];
@@ -77,7 +138,7 @@ class tool_bulkreset_courses_form extends moodleform {
         return (object)[
             'courses' => $courseids,
             'schedule' => $schedule,
-            'settingstemplate' => $data->settingstemplate
+            'settingstemplate' => $data->settingstemplate,
         ];
     }
 }
