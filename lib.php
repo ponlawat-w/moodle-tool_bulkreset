@@ -354,7 +354,7 @@ function tool_bulkreset_comparecategory($a, $b, $sortby) {
 /**
  * Flatten category trees.
  *
- * @param \core_course_category[] &$results
+ * @param \core_course_category[] $results
  * @param array $trees
  * @param array $categories
  * @return void
