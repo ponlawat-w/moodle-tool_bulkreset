@@ -30,7 +30,7 @@ if ($hassiteconfig) {
         new admin_externalpage(
             'bulkreset',
             get_string('bulkreset', 'tool_bulkreset'),
-            "{$CFG->wwwroot}/{$CFG->admin}/tool/bulkreset/index.php"
+            "{$CFG->wwwroot}/{$CFG->admin}/tool/bulkreset/schedules.php"
         )
     );
 }

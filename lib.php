@@ -67,7 +67,7 @@ function tool_bulkreset_renderselectallbuttons($show = true) {
 }
 
 /**
- * Render select all buttons.
+ * Render select all / deselect all buttons for selecting list of courses to be reset.
  *
  * @return string
  */
@@ -133,7 +133,7 @@ function tool_bulkreset_getstatusclass($status) {
 }
 
 /**
- * Convert exception to associated array
+ * Convert exception to assoc array for logging.
  *
  * @param \Exception|\Error $exorerr
  * @return array
@@ -234,10 +234,10 @@ function tool_bulkreset_executeschedule($schedule) {
 }
 
 /**
- * Get categories array by ID key
+ * Get an array of course categories with array key being category ID and the value being the category object.
  *
- * @param array $categories
- * @return array
+ * @param \core_course_category[] $categories
+ * @return \core_course_category[]
  */
 function tool_bulkreset_getcategoriesbyid($categories) {
     $results = [];
@@ -267,9 +267,9 @@ function tool_bulkreset_getcategorypathnames($category, $categories) {
 }
 
 /**
- * Get category tree
+ * Get category trees.
  *
- * @param \stdClass[] $categories
+ * @param array $categories
  * @return array
  */
 function tool_bulkreset_getcategorytrees($categories) {
@@ -322,10 +322,10 @@ function tool_bulkreset_filtermultilang($text) {
 }
 
 /**
- * Compare category.
+ * Compare sort order between two course categories.
  *
- * @param \stdClass $a
- * @param \stdClass $b
+ * @param \core_course_category $a
+ * @param \core_course_category $b
  * @param int $sortby
  * @return int
  */
@@ -354,9 +354,9 @@ function tool_bulkreset_comparecategory($a, $b, $sortby) {
 /**
  * Flatten category trees.
  *
- * @param \stdClass[] &$results
+ * @param \core_course_category[] &$results
  * @param array $trees
- * @param \stdClass[] $categories
+ * @param array $categories
  * @return void
  */
 function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
@@ -370,10 +370,10 @@ function tool_bulkreset_flattencategorytrees(&$results, $trees, $categories) {
 }
 
 /**
- * Get categories
+ * Get all course categories and sub-categories in a flattended array.
  *
  * @param int $sortby
- * @return array
+ * @return \core_course_category[]
  */
 function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
     $categories = core_course_category::get_all();
@@ -391,39 +391,33 @@ function tool_bulkreset_getcategories($sortby = TOOL_BULKRESET_SORT_SORTORDER) {
 }
 
 /**
- * Test if reset settings are enabled.
+ * Test if reset settings templates plugin is installed and enabled.
  *
  * @return bool
  */
-function tool_bulkreset_resetsettingsenabled() {
-    global $toolbulkresetresetsettingsenabled;
-
-    if (!isset($toolbulkresetresetsettingsenabled)) {
-        $toolbulkresetresetsettingsenabled = false;
-        $tools = core_plugin_manager::instance()->get_plugins_of_type('tool');
-        foreach ($tools as $tool) {
-            if ($tool->name == 'resetsettings') {
-                $toolbulkresetresetsettingsenabled = true;
-                break;
-            }
-        }
+function tool_bulkreset_resetsettingsenabled(): bool {
+    $resetsettingsplugin = core_plugin_manager::instance()->get_plugin_info('tool_resetsettings');
+    if (!$resetsettingsplugin) {
+        return false;
     }
-
-    return $toolbulkresetresetsettingsenabled;
+    return $resetsettingsplugin->is_enabled();
 }
 
 /**
- * Get settings
+ * Get settings templates list.
+ * This function does not check if tool_resetsettings is installed.
  *
  * @return array
  */
 function tool_bulkreset_getsettings() {
     global $DB;
+    /** @var \moodle_database $DB */
+    $DB;
     $settings = [
         'blank' => get_string('settings_blank', 'tool_bulkreset'),
         'default' => get_string('settings_default', 'tool_bulkreset'),
     ];
-    $templates = $DB->get_records_sql('SELECT id, name FROM {tool_resetsettings_settings} ORDER BY name ASC');
+    $templates = $DB->get_records('tool_resetsettings_settings', [], 'name ASC', 'id, name');
     foreach ($templates as $template) {
         $settings[$template->id] = $template->name;
     }

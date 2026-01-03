@@ -37,8 +37,8 @@ class tool_bulkreset_courses_form extends moodleform {
     /**
      * Constructor
      *
-     * @param string|null $actionurl
-     * @param int $sort
+     * @param string|null $actionurl URL to send data after submission
+     * @param int $sort Course category sort type
      */
     public function __construct($actionurl = null, $sort = TOOL_BULKRESET_SORT_SORTORDER) {
         $this->sort = $sort;
@@ -63,7 +63,7 @@ class tool_bulkreset_courses_form extends moodleform {
                 continue;
             }
 
-            $headername = "coursecategory_{$category->id}";
+            $headername = 'coursecategory_' . $category->id;
             $mform->addElement('header', $headername, $category->get_nested_name(false));
             $mform->setExpanded($headername, true);
 
@@ -71,12 +71,11 @@ class tool_bulkreset_courses_form extends moodleform {
             $mform->addElement('html', tool_bulkreset_renderselectallbuttons(count($courses) > 1));
 
             foreach ($courses as $course) {
-                $mform->addElement('advcheckbox', "courses[{$course->id}]", $course->fullname, '', ['courses' => 1]);
-                $mform->setDefault("courses[{$course->id}]", 1);
+                $checkboxname = 'courses[' . $course->id . ']';
+                $mform->addElement('advcheckbox', $checkboxname, $course->fullname);
+                $mform->setDefault($checkboxname, true);
             }
         }
-
-        $mform->addElement('html', \core\output\html_writer::start_tag('hr'));
 
         $mform->addElement('header', 'schedulingheader', get_string('scheduling', 'tool_bulkreset'));
         $mform->setExpanded('schedulingheader', true);
@@ -108,7 +107,20 @@ class tool_bulkreset_courses_form extends moodleform {
     }
 
     /**
-     * Get data to forward
+     * Display form
+     *
+     * @return void
+     */
+    public function display() {
+        global $PAGE;
+        /** @var \moodle_page $PAGE */
+        $PAGE;
+        $PAGE->requires->js_call_amd('tool_bulkreset/formscript', 'init');
+        return parent::display();
+    }
+
+    /**
+     * Get schedule data to be forwarded to resetsettings_form.
      *
      * @return \stdClass
      */

@@ -31,16 +31,16 @@ admin_externalpage_setup('bulkreset');
 
 $sorttype = optional_param('sort', TOOL_BULKRESET_SORT_SORTORDER, PARAM_INT);
 
-$PAGE->set_context(context_system::instance());
+/** @var \moodle_page $PAGE */
+$PAGE;
 $PAGE->set_url(new \core\url('/admin/tool/bulkreset/newtask.php', ['sort' => $sorttype]));
-$PAGE->requires->jquery();
-$PAGE->requires->js(new \core\url("/{$CFG->admin}/tool/bulkreset/formscript.js"));
+$PAGE->set_title(get_string('newbulkresettask', 'tool_bulkreset'));
+$PAGE->set_heading(get_string('newbulkresettask', 'tool_bulkreset'));
 
-$coursesform = new tool_bulkreset_courses_form("{$CFG->wwwroot}/{$CFG->admin}/tool/bulkreset/resetsettings.php", $sorttype);
+/** @var \core\output\core_renderer $OUTPUT */
+$OUTPUT;
 
 echo $OUTPUT->header();
-
-echo \core\output\html_writer::tag('h2', get_string('bulkreset', 'tool_bulkreset'));
 
 $sortoptions = [
     TOOL_BULKRESET_SORT_SORTORDER => 'sortorder',
@@ -67,6 +67,7 @@ echo \core\output\html_writer::tag(
     )
 );
 
+$coursesform = new tool_bulkreset_courses_form("{$CFG->wwwroot}/{$CFG->admin}/tool/bulkreset/resetsettings.php", $sorttype);
 $coursesform->display();
 
 echo $OUTPUT->footer();

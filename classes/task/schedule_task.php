@@ -27,6 +27,8 @@ namespace tool_bulkreset\task;
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../../lib.php');
+require_once(__DIR__ . '/../../../../../course/lib.php');
+require_once(__DIR__ . '/../../../../../course/format/lib.php');
 
 /**
  * Schedule task for cronjob

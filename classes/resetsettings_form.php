@@ -29,24 +29,20 @@ require_once($CFG->dirroot . '/course/lib.php');
 require_once(__DIR__ . '/../lib.php');
 
 /**
- * Reset settings form
+ * Reset settings form of a schedule.
  */
 class tool_bulkreset_resetsettings_form extends moodleform {
     /** @var stdClass $forwarddata */
     public $forwarddata = null;
     /** @var string[] $coursenames with array key being course ID. */
     public $coursenames;
-    /** @var bool $inherited */
-    public $inherited = false;
 
     /**
      * Constructor
      *
-     * @param stdCalss|null $forwarddata
-     * @param bool $inherited
+     * @param stdCalss|null $forwarddata Data forwarded from either this form of courses_form.
      */
-    public function __construct($forwarddata = null, $inherited = false) {
-        $this->inherited = $inherited;
+    public function __construct($forwarddata = null) {
         if ($forwarddata) {
             $this->forwarddata = $forwarddata;
             $this->coursenames = [];
@@ -65,14 +61,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
      * @return int[]
      */
     private function getcourseids() {
-        if ($this->inherited) {
-            $courses = get_courses();
-            $courseids = [];
-            foreach ($courses as $course) {
-                $courseids[] = $course->id;
-            }
-            return $courseids;
-        } else if (!isset($this->forwarddata) || !isset($this->forwarddata->courses)) {
+        if (!isset($this->forwarddata) || !isset($this->forwarddata->courses)) {
             return [];
         }
         return $this->forwarddata->courses;
@@ -209,6 +198,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         $mform->addHelpButton('reset_start_date', 'startdate');
         $mform->addElement('date_time_selector', 'reset_end_date', get_string('enddate'), ['optional' => true]);
         $mform->addHelpButton('reset_end_date', 'enddate');
+        $mform->addElement('static', 'generaldelete', get_string('delete'));
         $mform->addElement('checkbox', 'reset_events', get_string('deleteevents', 'calendar'));
         $mform->addElement('checkbox', 'reset_notes', get_string('deletenotes', 'notes'));
         $mform->addElement('checkbox', 'reset_comments', get_string('deleteallcomments', 'moodle'));
@@ -220,14 +210,17 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         $mform->addElement('header', 'rolesheader', get_string('roles'));
 
         $roles = $this->getroles();
-
-        $mform->addElement('select', 'unenrol_users', get_string('unenrolroleusers', 'enrol'), $roles, ['multiple' => 'multiple']);
-        $mform->addElement('checkbox', 'reset_roles_overrides', get_string('deletecourseoverrides', 'role'));
-        $mform->setAdvanced('reset_roles_overrides');
+        $attributes = [
+            'multiple' => 1,
+            'size' => min(count($roles), 10),
+        ];
+        $mform->addElement('select', 'unenrol_users', get_string('unenrolroleusers', 'enrol'), $roles, $attributes);
+        $mform->addElement('static', 'rolesdelete', get_string('delete'));
         $mform->addElement('checkbox', 'reset_roles_local', get_string('deletelocalroles', 'role'));
+        $mform->addElement('checkbox', 'reset_roles_overrides', get_string('deletecourseoverrides', 'role'));
 
         $mform->addElement('header', 'gradebookheader', get_string('gradebook', 'grades'));
-
+        $mform->addElement('static', 'gradebookdelete', get_string('delete'));
         $mform->addElement('checkbox', 'reset_gradebook_items', get_string('removeallcourseitems', 'grades'));
         $mform->addHelpButton('reset_gradebook_items', 'removeallcourseitems', 'grades');
         $mform->addElement('checkbox', 'reset_gradebook_grades', get_string('removeallcoursegrades', 'grades'));
@@ -235,11 +228,10 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         $mform->disabledIf('reset_gradebook_grades', 'reset_gradebook_items', 'checked');
 
         $mform->addElement('header', 'groupheader', get_string('groups'));
-
+        $mform->addElement('static', 'groupdelete', get_string('delete'));
         $mform->addElement('checkbox', 'reset_groups_remove', get_string('deleteallgroups', 'group'));
         $mform->addElement('checkbox', 'reset_groups_members', get_string('removegroupsmembers', 'group'));
         $mform->disabledIf('reset_groups_members', 'reset_groups_remove', 'checked');
-
         $mform->addElement('checkbox', 'reset_groupings_remove', get_string('deleteallgroupings', 'group'));
         $mform->addElement('checkbox', 'reset_groupings_members', get_string('removegroupingsmembers', 'group'));
         $mform->disabledIf('reset_groupings_members', 'reset_groupings_remove', 'checked');
@@ -252,23 +244,19 @@ class tool_bulkreset_resetsettings_form extends moodleform {
                 $modresetcourseformdefinition = $modname . '_reset_course_form_definition';
                 $modresetuserdata = $modname . '_reset_userdata';
                 if (file_exists($modfile)) {
-                    if (!$this->inherited) {
-                        $coursesinmod = $this->getcoursesinmod($modname);
-                        if (!$coursesinmod || !count($coursesinmod)) {
-                            continue;
-                        }
+                    $coursesinmod = $this->getcoursesinmod($modname);
+                    if (!$coursesinmod || !count($coursesinmod)) {
+                        continue;
                     }
                     include_once($modfile);
                     if (function_exists($modresetcourseformdefinition)) {
                         $modresetcourseformdefinition($mform);
-                        if (!$this->inherited) {
-                            $mform->addElement(
-                                'static',
-                                "coursesinmod_{$modname}",
-                                get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
-                                $this->getcoursesinmodhtml($coursesinmod)
-                            );
-                        }
+                        $mform->addElement(
+                            'static',
+                            "coursesinmod_{$modname}",
+                            get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
+                            $this->getcoursesinmodhtml($coursesinmod)
+                        );
                     } else if (!function_exists($modresetuserdata)) {
                         $unsupportedmods[] = $mod;
                     }
@@ -280,30 +268,28 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         // Mention unsupported mods.
         if (!empty($unsupportedmods)) {
             $mform->addElement('header', 'unsupportedheader', get_string('resetnotimplemented'));
+            $mform->addElement('static', 'unsupportedinfo', get_string('resetnotimplementedinfo'));
             foreach ($unsupportedmods as $mod) {
                 $mform->addElement('static', 'unsup' . $mod->name, get_string('modulenameplural', $mod->name));
-                $mform->setAdvanced('unsup' . $mod->name);
             }
         }
 
-        if (!$this->inherited) {
-            $mform->addElement('hidden', 'courses', implode(',', $this->getcourseids()));
-            $mform->setType('courses', PARAM_TEXT);
-            $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
-            $mform->setType('schedule', PARAM_INT);
-            $mform->addElement('hidden', 'settingstemplate', $this->forwarddata->settingstemplate);
-            $mform->setType('settingstemplate', PARAM_TEXT);
+        $mform->addElement('hidden', 'courses', implode(',', $this->getcourseids()));
+        $mform->setType('courses', PARAM_TEXT);
+        $mform->addElement('hidden', 'schedule', $this->forwarddata->schedule);
+        $mform->setType('schedule', PARAM_INT);
+        $mform->addElement('hidden', 'settingstemplate', $this->forwarddata->settingstemplate);
+        $mform->setType('settingstemplate', PARAM_TEXT);
 
-            $buttonarray = [];
-            $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('resetcourses', 'tool_bulkreset'));
-            if (!tool_bulkreset_resetsettingsenabled()) {
-                $buttonarray[] = &$mform->createElement('submit', 'selectdefault', get_string('selectdefault'));
-                $buttonarray[] = &$mform->createElement('submit', 'deselectall', get_string('deselectall'));
-            }
-            $buttonarray[] = &$mform->createElement('cancel');
-            $mform->addGroup($buttonarray, 'buttonar', '', [' '], false);
-            $mform->closeHeaderBefore('buttonar');
+        $buttonarray = [];
+        $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('schedulecoursesreset', 'tool_bulkreset'));
+        if (!tool_bulkreset_resetsettingsenabled()) {
+            $buttonarray[] = &$mform->createElement('submit', 'selectdefault', get_string('selectdefault'));
+            $buttonarray[] = &$mform->createElement('submit', 'deselectall', get_string('deselectall'));
         }
+        $buttonarray[] = &$mform->createElement('cancel');
+        $mform->addGroup($buttonarray, 'buttonar', '', [' '], false);
+        $mform->closeHeaderBefore('buttonar');
     }
 
     /**
@@ -314,7 +300,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     public function load_defaults() {
         global $CFG, $COURSE, $DB;
 
-        $mform =& $this->_form;
+        $mform = $this->_form;
 
         $defaults = [
             'reset_events' => 1,

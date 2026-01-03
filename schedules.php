@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Settings entry point.
+ * Schedules page.
  *
  * @package     tool_bulkreset
  * @copyright   2020 Ponlawat WEERAPANPISIT <ponlawat_w@outlook.co.th>
@@ -27,6 +27,12 @@ require_once($CFG->libdir . '/adminlib.php');
 require_once(__DIR__ . '/lib.php');
 
 admin_externalpage_setup('bulkreset');
+
+/** @var \moodle_page $PAGE */
+$PAGE;
+$PAGE->set_url(new \core\url('/admin/tool/bulkreset/schedules.php'));
+$PAGE->set_title(get_string('bulkresetschedules', 'tool_bulkreset'));
+$PAGE->set_heading(get_string('bulkresetschedules', 'tool_bulkreset'));
 
 /** @var \core\output\core_renderer $OUTPUT */
 $OUTPUT;
@@ -59,7 +65,8 @@ foreach ($schedules as $schedule) {
                 '/' . $CFG->admin . '/tool/bulkreset/schedulestatus.php',
                 ['id' => $schedule->id]
             ),
-            get_string('view')
+            get_string('view'),
+            ['class' => 'btn btn-sm btn-primary']
         );
     }
     if ($schedule->status != TOOL_BULKRESET_STATUS_EXECUTING) {
@@ -69,7 +76,7 @@ foreach ($schedules as $schedule) {
                 ['id' => $schedule->id]
             ),
             get_string('delete'),
-            ['class' => 'text-danger']
+            ['class' => 'btn btn-sm btn-danger']
         );
     }
 
@@ -96,7 +103,7 @@ if (count($schedules)) {
     echo \core\output\html_writer::div(get_string('noschedule', 'tool_bulkreset'), 'alert alert-info');
 }
 
-echo \core\output\html_writer::start_div('', ['style' => 'text-align: center;']);
+echo \core\output\html_writer::start_div('text-center mt-4');
 echo \core\output\html_writer::link(
     new \core\url("/{$CFG->admin}/tool/bulkreset/newtask.php"),
     get_string('newtask', 'tool_bulkreset'),
@@ -104,9 +111,9 @@ echo \core\output\html_writer::link(
 );
 echo ' ';
 echo \core\output\html_writer::link(
-    new \core\url("/{$CFG->admin}/tool/bulkreset/index.php", ['t' => time()]),
+    new \core\url("/{$CFG->admin}/tool/bulkreset/schedules.php", ['t' => time()]),
     get_string('refresh'),
-    ['class' => 'btn btn-default']
+    ['class' => 'btn btn-secondary']
 );
 echo \core\output\html_writer::end_div();
 

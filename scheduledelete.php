@@ -30,6 +30,13 @@ require_once(__DIR__ . '/classes/deleteconfirm_form.php');
 admin_externalpage_setup('bulkreset');
 
 $scheduleid = required_param('id', PARAM_INT);
+
+/** @var \moodle_page $PAGE */
+$PAGE;
+$PAGE->set_url(new \core\url('/admin/tool/bulkreset/scheduledelete.php'), ['id' => $scheduleid]);
+$PAGE->set_title(get_string('scheduledeleteconfirmation', 'tool_bulkreset'));
+$PAGE->set_heading(get_string('scheduledeleteconfirmation', 'tool_bulkreset'));
+
 $schedule = $DB->get_record('tool_bulkreset_schedules', ['id' => $scheduleid]);
 if (!$schedule) {
     throw new \core\exception\moodle_exception('Schedule not found');
@@ -41,14 +48,12 @@ if ($schedule->status == TOOL_BULKRESET_STATUS_EXECUTING) {
 $confirmform = new deleteconfirm_form();
 
 if ($confirmform->is_cancelled()) {
-    redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/index.php"));
+    redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/schedules.php"));
 } else if ($confirmform->is_submitted()) {
     $DB->delete_records('tool_bulkreset_schedules', ['id' => $schedule->id]);
-    redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/index.php", ['deleted' => 1]));
+    redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/schedules.php", ['deleted' => 1]));
 }
 
 echo $OUTPUT->header();
-
 $confirmform->display();
-
 echo $OUTPUT->footer();

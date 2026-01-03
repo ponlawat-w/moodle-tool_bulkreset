@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Reset settings page.
+ * Page to configure reset settings of a schedule.
  *
  * @package     tool_bulkreset
  * @copyright   2020 Ponlawat WEERAPANPISIT <ponlawat_w@outlook.co.th>
@@ -28,15 +28,22 @@ require_once(__DIR__ . '/classes/courses_form.php');
 require_once(__DIR__ . '/classes/resetsettings_form.php');
 
 admin_externalpage_setup('bulkreset');
+
+/** @var \moodle_page $PAGE */
+$PAGE;
+$PAGE->set_url(new \core\url('/admin/tool/bulkreset/resetsettings.php'));
+$PAGE->set_title(get_string('configurebulkresetsettings', 'tool_bulkreset'));
+$PAGE->set_heading(get_string('configurebulkresetsettings', 'tool_bulkreset'));
+
 $coursesform = new tool_bulkreset_courses_form();
 $resetsettingsform = new tool_bulkreset_resetsettings_form();
 
 if ($coursesform->is_cancelled() || $resetsettingsform->is_cancelled()) {
-    redirect(new \core\url('/' . $CFG->admin . '/tool/bulkreset/index.php'));
+    redirect(new \core\url('/' . $CFG->admin . '/tool/bulkreset/schedules.php'));
     exit;
 }
 if (!$coursesform->is_submitted() && !$resetsettingsform->is_submitted()) {
-    redirect(new \core\url('/' . $CFG->admin . '/tool/bulkreset/index.php'));
+    redirect(new \core\url('/' . $CFG->admin . '/tool/bulkreset/schedules.php'));
     exit;
 }
 
@@ -59,7 +66,7 @@ if ($data = $resetsettingsform->get_data()) {
         unset($data->submitbutton);
         $schedule->data = json_encode($data);
         $DB->insert_record('tool_bulkreset_schedules', $schedule);
-        redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/index.php", ['scheduled' => 1]));
+        redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/schedules.php", ['scheduled' => 1]));
     }
 } else if (
     is_numeric($forwarddata->settingstemplate)
@@ -72,6 +79,8 @@ if ($data = $resetsettingsform->get_data()) {
     $resetsettingsform->load_defaults();
 }
 
+/** @var \core\output\core_renderer $OUTPUT */
+$OUTPUT;
 echo $OUTPUT->header();
 $resetsettingsform->display();
 echo $OUTPUT->footer();

@@ -29,6 +29,13 @@ require_once(__DIR__ . '/lib.php');
 admin_externalpage_setup('bulkreset');
 
 $scheduleid = required_param('id', PARAM_INT);
+
+/** @var \moodle_page $PAGE */
+$PAGE;
+$PAGE->set_url(new \core\url('/admin/tool/bulkreset/schedulestatus.php'), ['id' => $scheduleid]);
+$PAGE->set_title(get_string('bulkresettaskstatus', 'tool_bulkreset'));
+$PAGE->set_heading(get_string('bulkresettaskstatus', 'tool_bulkreset'));
+
 $schedule = $DB->get_record('tool_bulkreset_schedules', ['id' => $scheduleid]);
 if (!$schedule) {
     throw new \core\exception\moodle_exception('Schedule not found');
@@ -45,7 +52,6 @@ $result = json_decode($schedule->result);
 
 echo $OUTPUT->header();
 echo \core\output\html_writer::start_tag('p');
-echo \core\output\html_writer::link(new \core\url("/{$CFG->admin}/tool/bulkreset/index.php"), get_string('back'));
 echo \core\output\html_writer::end_tag('p');
 
 $statustable = new \core_table\output\html_table();
@@ -108,9 +114,9 @@ echo \core\output\html_writer::table($statustable);
 
 echo \core\output\html_writer::start_div('', ['style' => 'text-align: center;']);
 echo \core\output\html_writer::link(
-    new \core\url("/{$CFG->admin}/tool/bulkreset/index.php"),
+    new \core\url('/' . $CFG->admin . '/tool/bulkreset/schedules.php'),
     get_string('back'),
-    ['class' => 'btn btn-default']
+    ['class' => 'btn btn-secondary mt-4']
 );
 echo \core\output\html_writer::end_div();
 

@@ -1,6 +1,6 @@
 # Bulk Reset #
 
-Buld reset plugin.
+Bulk reset plugin.
 
 ## Installing via uploaded ZIP file ##
 

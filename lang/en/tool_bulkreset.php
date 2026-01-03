@@ -23,19 +23,26 @@
  */
 
 $string['bulkreset'] = 'Course content bulk reset';
+$string['bulkresetschedules'] = 'Bulk Reset Schedules';
+$string['bulkresettaskstatus'] = 'Bulk Reset Task Status';
+$string['configurebulkresetsettings'] = 'Configure Bulk Reset Settings';
 $string['coursesinmod'] = 'Courses whose {$a} will be reset';
 $string['deleteconfirm'] = 'Are you sure you want to delete this schedule?';
 $string['deselectall'] = 'Deselect all';
 $string['deselectallall'] = 'Deselect all courses';
 $string['finish'] = 'Finish';
 $string['gotoresetsettings'] = 'Edit settings templates';
+$string['newbulkresettask'] = 'New Bulk Reset Task';
 $string['newtask'] = 'Create new task';
 $string['noschedule'] = 'There is currently no schedule.';
 $string['pluginname'] = 'Bulk Course Reset';
 $string['resetcourses'] = 'Reset courses';
 $string['resetfinish'] = 'Bulk course reset is finish';
+$string['resetsettings'] = 'Reset Settings';
 $string['schedule'] = 'Task schedule';
 $string['scheduleadded'] = 'Your task has been scheduled.';
+$string['schedulecoursesreset'] = 'Schedule Courses Reset';
+$string['scheduledeleteconfirmation'] = 'Schedule Delete Confirmation';
 $string['scheduledeleted'] = 'Your task has been deleted.';
 $string['scheduletask'] = 'Bulk Reset Scheduler Task';
 $string['scheduling'] = 'Scheduling';
