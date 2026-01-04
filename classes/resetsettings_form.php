@@ -178,12 +178,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         return $courses;
     }
 
-    /**
-     * Form definition
-     *
-     * @return void
-     */
-    protected function definition() {
+    protected function defaultdefinition() {
         global $DB, $CFG;
 
         if (!$this->forwarddata) {
@@ -280,6 +275,16 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         $mform->setType('schedule', PARAM_INT);
         $mform->addElement('hidden', 'settingstemplate', $this->forwarddata->settingstemplate);
         $mform->setType('settingstemplate', PARAM_TEXT);
+    }
+
+    /**
+     * Form definition
+     *
+     * @return void
+     */
+    protected function definition() {
+        $this->defaultdefinition();
+        $mform =& $this->_form;
 
         $buttonarray = [];
         $buttonarray[] = &$mform->createElement('submit', 'submitbutton', get_string('schedulecoursesreset', 'tool_bulkreset'));
