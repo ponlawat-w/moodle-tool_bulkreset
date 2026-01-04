@@ -97,7 +97,7 @@ class tool_bulkreset_courses_form extends moodleform {
                 'gotoresetsettings',
                 '',
                 \core\output\html_writer::link(
-                    new \core\url('/admin/tool/resetsettings'),
+                    new \core\url('/admin/tool/resetsettings/templates.php'),
                     get_string('gotoresetsettings', 'tool_bulkreset')
                 )
             );
