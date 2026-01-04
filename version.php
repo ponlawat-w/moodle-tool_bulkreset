@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'tool_bulkreset';
-$plugin->version = 2025122400;
+$plugin->version = 2026010400;
 $plugin->requires = 2025041400;
-$plugin->release = '1.0.0';
+$plugin->release = '1.0.1';
 $plugin->maturity = MATURITY_STABLE;
