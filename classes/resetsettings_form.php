@@ -178,6 +178,11 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         return $courses;
     }
 
+    /**
+     * Form default definition
+     *
+     * @return void
+     */
     protected function defaultdefinition() {
         global $DB, $CFG;
 
