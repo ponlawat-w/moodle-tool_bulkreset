@@ -240,7 +240,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         if ($allmods = $DB->get_records('modules')) {
             foreach ($allmods as $mod) {
                 $modname = $mod->name;
-                $modfile = $CFG->dirroot . '/mod/$modname/lib.php';
+                $modfile = $CFG->dirroot . "/mod/$modname/lib.php";
                 $modresetcourseformdefinition = $modname . '_reset_course_form_definition';
                 $modresetuserdata = $modname . '_reset_userdata';
                 if (file_exists($modfile)) {
