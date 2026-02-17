@@ -68,15 +68,19 @@ if ($data = $resetsettingsform->get_data()) {
         $DB->insert_record('tool_bulkreset_schedules', $schedule);
         redirect(new \core\url("/{$CFG->admin}/tool/bulkreset/schedules.php", ['scheduled' => 1]));
     }
+} else if ($forwarddata->settingstemplate == 'default') {
+    $resetsettingsform->load_defaults();
 } else if (
-    is_numeric($forwarddata->settingstemplate)
+    $forwarddata->settingstemplate != 'blank'
     && $forwarddata->settingstemplate
     && tool_bulkreset_resetsettingsenabled()
 ) {
     $setting = $DB->get_record('tool_resetsettings_settings', ['id' => $forwarddata->settingstemplate]);
-    $resetsettingsform->set_data(json_decode($setting->data));
-} else if ($forwarddata->settingstemplate == 'default') {
-    $resetsettingsform->load_defaults();
+    $templatedata = json_decode($setting->data);
+    unset($templatedata->courses);
+    unset($templatedata->schedule);
+    unset($templatedata->settingstemplate);
+    $resetsettingsform->set_data($templatedata);
 }
 
 /** @var \core\output\core_renderer $OUTPUT */

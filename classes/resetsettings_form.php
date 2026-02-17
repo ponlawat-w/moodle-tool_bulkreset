@@ -36,6 +36,8 @@ class tool_bulkreset_resetsettings_form extends moodleform {
     public $forwarddata = null;
     /** @var string[] $coursenames with array key being course ID. */
     public $coursenames;
+    /** @var bool true to display all possible mod reset settings regardless of course IDs */
+    protected $showallmodsettings = false;
 
     /**
      * Constructor
@@ -243,20 +245,24 @@ class tool_bulkreset_resetsettings_form extends moodleform {
                 $modfile = $CFG->dirroot . "/mod/$modname/lib.php";
                 $modresetcourseformdefinition = $modname . '_reset_course_form_definition';
                 $modresetuserdata = $modname . '_reset_userdata';
-                if (file_exists($modfile)) {
+                if (!$this->showallmodsettings) {
                     $coursesinmod = $this->getcoursesinmod($modname);
                     if (!$coursesinmod || !count($coursesinmod)) {
                         continue;
                     }
+                }
+                if (file_exists($modfile)) {
                     include_once($modfile);
                     if (function_exists($modresetcourseformdefinition)) {
                         $modresetcourseformdefinition($mform);
-                        $mform->addElement(
-                            'static',
-                            "coursesinmod_{$modname}",
-                            get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
-                            $this->getcoursesinmodhtml($coursesinmod)
-                        );
+                        if (!$this->showallmodsettings) {
+                            $mform->addElement(
+                                'static',
+                                "coursesinmod_{$modname}",
+                                get_string('coursesinmod', 'tool_bulkreset', get_string('modulenameplural', $modname)),
+                                $this->getcoursesinmodhtml($coursesinmod)
+                            );
+                        }
                     } else if (!function_exists($modresetuserdata)) {
                         $unsupportedmods[] = $mod;
                     }
@@ -327,7 +333,7 @@ class tool_bulkreset_resetsettings_form extends moodleform {
         if ($allmods = $DB->get_records('modules')) {
             foreach ($allmods as $mod) {
                 $modname = $mod->name;
-                $modfile = $CFG->dirroot . '/mod/$modname/lib.php';
+                $modfile = $CFG->dirroot . "/mod/$modname/lib.php";
                 $modresetcourseformdefaults = $modname . '_reset_course_form_defaults';
                 if (file_exists($modfile)) {
                     @include_once($modfile);
